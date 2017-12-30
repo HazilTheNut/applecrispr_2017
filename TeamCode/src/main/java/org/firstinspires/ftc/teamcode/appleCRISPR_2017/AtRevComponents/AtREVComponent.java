@@ -14,4 +14,5 @@ public class AtREVComponent {
         return false;
     }
 
+    public void stop(){}
 }

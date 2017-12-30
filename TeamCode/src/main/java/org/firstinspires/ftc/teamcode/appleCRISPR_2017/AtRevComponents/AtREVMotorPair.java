@@ -77,4 +77,9 @@ public class AtREVMotorPair extends AtREVComponent {
     }
     */
 
+    @Override
+    public void stop(){
+        setPower(0);
+    }
+
 }

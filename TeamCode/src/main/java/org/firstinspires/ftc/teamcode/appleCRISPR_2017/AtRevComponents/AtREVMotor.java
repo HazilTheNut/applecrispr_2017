@@ -79,4 +79,11 @@ public class AtREVMotor extends AtREVComponent {
 
     public int getPosition() {return motor.getCurrentPosition(); }
 
+    public double getPower() {return motor.getPower(); }
+
+    @Override
+    public void stop(){
+        setPower(0);
+    }
+
 }

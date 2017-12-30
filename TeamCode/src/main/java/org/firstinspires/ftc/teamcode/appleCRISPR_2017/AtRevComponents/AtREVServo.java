@@ -50,10 +50,15 @@ public class AtREVServo extends AtREVComponent {
     public void incrementPosition(double inc){
         currentPos += inc;
         double MAX_POS = 1.0;
-        currentPos = Math.min(MAX_POS, currentPos); //CAREFUL use min on MAX
+        currentPos = Math.min(MAX_POS, currentPos); //CAREFUL use min() on MAX
         double MIN_POS = 0.0;
-        currentPos = Math.max(MIN_POS, currentPos); //...and max on MIN
+        currentPos = Math.max(MIN_POS, currentPos); //...and max() on MIN
 
         servo.setPosition(currentPos);
+    }
+
+    public void stop(){
+        setPosition(servo.getPosition());
+        currentPos = servo.getPosition();
     }
 }
