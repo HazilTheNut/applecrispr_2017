@@ -83,17 +83,73 @@ public class AcRelicTeleOp extends OpMode{
 
     @Override
     public void loop() {
+        //The various functions of the robot are divided up for your convenience
 
+        doMovement(); //Completed?
+
+        doArmKinematics(); //Incomplete
+
+        doMiscActions(); //Completed?
+
+        updateTelemetry(); //Always in progress
     }
 
-    private void doMovement(){}
+    private void doMovement(){
+        //Omniwheel calculations
+        // Maths at https://docs.google.com/spreadsheets/d/1OgPl5HwFHhcrxL53pKGzzdltQKPVZg9Mb06K4MN4qeI/edit?usp=sharing
+        double x = gamepad1.right_stick_x;
+        double y = gamepad1.right_stick_y;
+        double joy_angle = Math.atan2(y, x);
+        double rotatedAngle = joy_angle - Math.PI/4;
+        double speed = Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
+
+        rotatedAngle = Math.abs(rotatedAngle - 0)             < .09 ? 0             : rotatedAngle;  // if we're close to going a cardinal direction, snap to that.
+        rotatedAngle = Math.abs(rotatedAngle - Math.PI / 2)   < .09 ? Math.PI / 2   : rotatedAngle;
+        rotatedAngle = Math.abs(rotatedAngle - Math.PI)       < .09 ? Math.PI       : rotatedAngle;
+        rotatedAngle = Math.abs(rotatedAngle - Math.PI * 3/2) < .09 ? Math.PI * 3/2 : rotatedAngle;
+
+        float frPower = (float)(speed * Math.cos(rotatedAngle));
+        float flPower = (float)(speed * Math.sin(rotatedAngle));
+
+        if (frPower > .02 && frPower < -.02) frPower =  0; //Deadbanding
+        if (flPower >  .02 && flPower < -.02) flPower =  0; //Clipping power
+
+        //Setting joystick values
+        double powerScalar = isSlowDriving ? 0.35 : 1;
+
+        if (gamepad1.right_trigger > 0.1){ //Clockwise turn
+            driveFL.setPower(powerScalar);
+            driveBL.setPower(powerScalar);
+            driveFR.setPower(-1 * powerScalar);
+            driveBR.setPower(-1 * powerScalar);
+        } else if (gamepad1.left_trigger > 0.1){ //Counter-clockwise turn
+            driveFL.setPower(-1 * powerScalar);
+            driveBL.setPower(-1 * powerScalar);
+            driveFR.setPower(powerScalar);
+            driveBR.setPower(powerScalar);
+        } else { //Drives normally if not turning
+            driveFL.setPower(flPower);
+            driveBR.setPower(flPower);
+            driveFR.setPower(frPower);
+            driveBL.setPower(frPower);
+        }
+    }
+
+
 
     private void doArmKinematics(){}
 
     private void doMiscActions() {
+        //All Stop Button
         if (gamepad1.b){
             revModule.allStop();
             telemetry.addData("=x= ALL STOP! =x=","");
+        }
+        //Suction
+        if (gamepad1.left_bumper || gamepad1.dpad_down){ //Always prioritize releasing the pressure
+            suctionMotor.setPower(0.5);
+        } else if (gamepad1.right_bumper || gamepad1.dpad_up){
+            suctionMotor.setPower(-0.5);
         }
     }
 
