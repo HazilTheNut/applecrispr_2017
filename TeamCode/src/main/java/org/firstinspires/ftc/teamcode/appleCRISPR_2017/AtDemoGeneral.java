@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVServ
  * Good luck!
  */
 
-@Autonomous(name = "Servo Test", group = "Autonomous")
+//@Autonomous(name = "Servo Test", group = "Autonomous")
 public class AtDemoGeneral extends AtDemoBase {
 
     /**

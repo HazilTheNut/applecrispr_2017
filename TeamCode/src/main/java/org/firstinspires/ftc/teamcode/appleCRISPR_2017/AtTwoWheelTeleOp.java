@@ -42,7 +42,7 @@ import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.*;
  * <p/>
  * Enables control of the robot via the gamepad
  */
-@TeleOp(name = "MOTOR TEST", group = "Concept")
+//@TeleOp(name = "MOTOR TEST", group = "Concept")
 public class AtTwoWheelTeleOp extends OpMode {
     //AtWheelPair driveWheels;
     //AtAttachment attachments;

@@ -51,6 +51,8 @@ public class AcRelicTeleOp extends OpMode{
     private AtREVServo armElbow1;
     private AtREVServo armElbow2;
 
+    private double elbow1Offset = 0;
+
     //Suction
     private AtREVMotor suctionMotor;
 
@@ -72,24 +74,31 @@ public class AcRelicTeleOp extends OpMode{
         driveBR = (AtREVMotor)revModule.add(new AtREVMotor("drive-br"));
 
         armShoulder = (AtREVMotor)revModule.add(new AtREVMotor("shoulder"));
-        armElbow1 = (AtREVServo)revModule.add(new AtREVServo("elbow-1"));
-        armElbow2 = (AtREVServo)revModule.add(new AtREVServo("elbow-2"));
+        armElbow1 = (AtREVServo)revModule.add(new AtREVServo("elbow-1", 0.5));
+        armElbow2 = (AtREVServo)revModule.add(new AtREVServo("elbow-2", 0.475));
 
         suctionMotor = (AtREVMotor)revModule.add(new AtREVMotor("suction"));
 
         telemetry.addData("Init successful: ", revModule.initialize(hardwareMap));
         telemetry.update();
+
+        driveBL.setDirection(false);
     }
 
     @Override
     public void loop() {
-        //The various functions of the robot are divided up for your convenience
+        if (gamepad1.b) { //All stop button
+            revModule.allStop();
+            telemetry.addData(": =X= !!! ALL STOP !!! =X=","");
+        } else {
+            //The various functions of the robot are divided up for your convenience
 
-        doMovement(); //Completed?
+            doMovement(); //Completed?
 
-        doArmKinematics(); //Incomplete
+            doArmKinematics(); //Incomplete
 
-        doMiscActions(); //Completed?
+            doMiscActions(); //Completed?
+        }
 
         updateTelemetry(); //Always in progress
     }
@@ -140,34 +149,41 @@ public class AcRelicTeleOp extends OpMode{
     private void doArmKinematics(){}
 
     private void doMiscActions() {
-        //All Stop Button
-        if (gamepad1.b){
-            revModule.allStop();
-            telemetry.addData("=x= ALL STOP! =x=","");
-        }
         //Suction
         if (gamepad1.left_bumper || gamepad1.dpad_down){ //Always prioritize releasing the pressure
             suctionMotor.setPower(0.5);
         } else if (gamepad1.right_bumper || gamepad1.dpad_up){
             suctionMotor.setPower(-0.5);
+        } else {
+            suctionMotor.setPower(0);
         }
+        if (gamepad1.dpad_left){
+            elbow1Offset -= 0.00075;
+        }
+        if (gamepad1.dpad_right){
+            elbow1Offset += 0.00075;
+        }
+        armElbow2.setPosition(elbow1Offset);
     }
 
     private void updateTelemetry(){
 
         telemetry.addData("MOVEMENT","");
-        telemetry.addData("> Direction       : ", movementDirection);
-        telemetry.addData("> FL Power    : ", driveFL.getPower());
-        telemetry.addData("> BL Power    : ", driveFR.getPower());
-        telemetry.addData("> FR Power    : ", driveBL.getPower());
-        telemetry.addData("> BL Power    : ", driveBR.getPower());
-        telemetry.addData("> Slow Mode       : ", isSlowDriving);
+        telemetry.addData("> Direction", movementDirection);
+        telemetry.addData("> FL Power", driveFL.getPower());
+        telemetry.addData("> BL Power", driveFR.getPower());
+        telemetry.addData("> FR Power", driveBL.getPower());
+        telemetry.addData("> BL Power", driveBR.getPower());
+        telemetry.addData("> Slow Mode", isSlowDriving);
 
         telemetry.addData("ARM","");
-        telemetry.addData("> Shoulder Goal : ", shoulderGoalAngle);
-        telemetry.addData("> Shoulder Pos  : ", armShoulder.getPosition() / 3.1111111); // 1120 / 360 = 3.11111111.....
-        telemetry.addData("> Elbow Goal : ", elbowGoalAngle);
-        telemetry.addData("> Elbow Pos  : ", "TODO");
+        telemetry.addData("> Shoulder Goal", shoulderGoalAngle);
+        telemetry.addData("> Shoulder Pos", armShoulder.getPosition() / 3.1111111); // 1120 / 360 = 3.11111111.....
+        telemetry.addData("> Elbow Goal", elbowGoalAngle);
+        telemetry.addData("> Elbow Pos", "TODO");
+        telemetry.addData("> Elbow 1 Offset", elbow1Offset);
+        telemetry.addData("> Elbow Servo 1 Pos", armElbow1.getPosition());
+        telemetry.addData("> Elbow Servo 2 Pos", armElbow2.getPosition());
 
         telemetry.addData("OTHER","");
         telemetry.addData("> Suction Power : ", suctionMotor.getPower());

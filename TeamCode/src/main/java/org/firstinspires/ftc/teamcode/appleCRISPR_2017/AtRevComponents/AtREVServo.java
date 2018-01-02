@@ -29,8 +29,18 @@ public class AtREVServo extends AtREVComponent {
     private Servo servo;
     private double currentPos = 1;
 
+    private boolean isContinuousRotation = false;
+    private double motionlessPosition = 1;
+
     public AtREVServo(String servoName) {
         name = servoName;
+    }
+
+    public AtREVServo(String servoName, double zeroMotionPos){ //If you are setting a zero-motion position, then the servo must be continuous rotation
+        name = servoName;
+        isContinuousRotation = true;
+        motionlessPosition = zeroMotionPos;
+        currentPos = motionlessPosition;
     }
 
     @Override
@@ -54,11 +64,18 @@ public class AtREVServo extends AtREVComponent {
         double MIN_POS = 0.0;
         currentPos = Math.max(MIN_POS, currentPos); //...and max() on MIN
 
-        servo.setPosition(currentPos);
+        setPosition(currentPos);
     }
 
+    public double getMotionlessPosition() { return motionlessPosition; }
+
+    @Override
     public void stop(){
-        setPosition(servo.getPosition());
+        if (isContinuousRotation){
+            setPosition(motionlessPosition);
+        } else {
+            setPosition(servo.getPosition());
+        }
         currentPos = servo.getPosition();
     }
 }
