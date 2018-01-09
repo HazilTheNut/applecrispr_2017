@@ -58,14 +58,14 @@ public class AtREVMotor extends AtREVComponent {
      * @param degrees goal position in degrees
      * @param sensitivity sensitivity in degrees
      */
-    public void powerToPosition (double power, int degrees, int sensitivity) {
+    public void powerToPosition (double power, double degrees, int sensitivity) {
         power = Math.abs(power);
-        int goalPos = (int) (degrees * (3.1111111111)); // 1120 / 360 = 3.1111111111111
-        int margin = (int) (sensitivity * (3.1111111111));
-        double  motorPower = power;
-        if (Math.abs(motor.getCurrentPosition() - goalPos) < 2 * margin) {
-            motorPower /= 2;
-        }
+        int goalPos = (int)(degrees * (3.1111111111)); // 1120 / 360 = 3.1111111111111
+        int margin = (int)(sensitivity * (3.1111111111));
+        double motorPower = power;
+        //if (Math.abs(motor.getCurrentPosition() - goalPos) < 2 * margin) {
+        //    motorPower /= 2;
+        //}
         if (Math.abs(motor.getCurrentPosition() - goalPos) > margin) { //If far away enough from goal position
             if (motor.getCurrentPosition() < goalPos) {
                 motor.setPower(motorPower); //If position is behind the assigned position, move "forwards"
