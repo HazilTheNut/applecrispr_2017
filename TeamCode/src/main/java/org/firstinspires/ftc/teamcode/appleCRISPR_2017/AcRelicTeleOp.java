@@ -53,8 +53,6 @@ public class AcRelicTeleOp extends OpMode{
     private AtREVServo armWrist;
     private AtREVMotor armElbowEnc;
 
-    private double elbow1Offset = 0;
-
     //Suction
     private AtREVMotor suctionMotor;
 
@@ -68,9 +66,16 @@ public class AcRelicTeleOp extends OpMode{
     private final float armSegment2 = 13.5f; //In inches; Coincidentally identical
 
     private final double defaultShoulderAngle = 134.216; //Calculated at default resting position
+    //private final double defaultShoulderAngle = 90;
     private double shoulderAngleOffset = 0;
     private final double defaultElbowAngle = 154.48; //Also calculated at default resting position
+    //private final double defaultElbowAngle = 0;
     private double elbowAngleOffset = 0;
+
+    // 1120 / 360 = 3.1111111......
+    private final double shoulderEncTickToDeg = 3 * 3.111111111; //Ratio is ticks / degrees. Multiplied due to gearing ratios
+    private final double elbowEncTicktoDeg = 2 * 3.111111111; //Ratio is ticks / degrees.
+
 
     //Telemetry
     private double movementDirection = 0; //In degrees
@@ -101,8 +106,8 @@ public class AcRelicTeleOp extends OpMode{
         armElbow2.stop();
         armElbow1.stop();
 
-        shoulderAngleOffset = defaultShoulderAngle - (armShoulder.getPosition() / 3.1111111);
-        elbowAngleOffset    = defaultElbowAngle    - (armElbowEnc.getPosition() / 3.1111111);
+        shoulderAngleOffset = defaultShoulderAngle - (armShoulder.getPosition() / shoulderEncTickToDeg);
+        elbowAngleOffset    = defaultElbowAngle    - (armElbowEnc.getPosition() / elbowEncTicktoDeg);
 
         driveBL.setDirection(false);
     }
@@ -175,19 +180,16 @@ public class AcRelicTeleOp extends OpMode{
 
         //calculateArmAngles(); //Calculations verified to be correct
 
-        //moveArm();
+        //moveArm(); //Shoulder working, elbow not so much
     }
 
     private void calculateArmAngles(){
         double r = Math.sqrt(Math.pow(armGoalX,2) + Math.pow(armGoalY,2));
         double baseAngle1 = Math.atan2(armGoalY,armGoalX);
-
         double elbowAngle = Math.PI - Math.acos( (Math.pow(r,2) - Math.pow(armSegment1,2) - Math.pow(armSegment2,2)) / (-2 * armSegment1 * armSegment2) );
-
         double baseAngle2 = Math.asin(armSegment2 * Math.sin(elbowAngle) / r);
-
         double baseTotalAngle = baseAngle1 + baseAngle2;
-
+        //telemetry.addData("> baseTotalAngle",baseTotalAngle);
         double radToDeg = (180 / Math.PI);
 
         shoulderGoalAngle = baseTotalAngle * radToDeg; //Converted to degrees
@@ -195,47 +197,62 @@ public class AcRelicTeleOp extends OpMode{
 
         wristGoalAngle = 90 + shoulderGoalAngle - elbowGoalAngle; //Conversion unneeded
 
+        /*
+        telemetry.addData("IK Math","");
+        telemetry.addData("> baseAngle1",baseAngle1);
+        telemetry.addData("> elbowAngle",elbowAngle);
+        telemetry.addData("> baseAngle2",baseAngle2);
+        /**/
     }
 
     private void goalPosMovement() {
 
+        double safetyMargin = 0.05; //We don't want to completely ruin the kinematics with one floating point rounding error
         //I/O axis
-        double goalXMovement = gamepad1.left_stick_x * -0.4f;
+        double goalXMovement = gamepad2.left_stick_x * -0.4f;
         if (Math.abs(goalXMovement) < 0.1) goalXMovement = 0;
         armGoalX += goalXMovement; //Receive input
 
         if (armGoalX < 0) armGoalX = 0; //Limits on where the goal can be
-        if (armGoalX > armSegment1 + armSegment2) armGoalX = armSegment1 + armSegment2;
+        if (armGoalX > armSegment1 + armSegment2 - safetyMargin) armGoalX = armSegment1 + armSegment2;
 
-        double maxLengthSqrd = Math.pow(armSegment1 + armSegment2,2) - 0.005;
-        double maxX = Math.sqrt(maxLengthSqrd - Math.pow(armGoalY,2));
-        if (goalXMovement > 0 && armGoalX > maxX) armGoalY = Math.sqrt(maxLengthSqrd - Math.pow(armGoalX,2)); //Moves y position down to allow more room to move x position
+        double maxLengthSqrd = Math.pow(armSegment1 + armSegment2,2);
+        double maxX = Math.sqrt(maxLengthSqrd - Math.pow(armGoalY,2)) - safetyMargin;
+        if (goalXMovement > 0 && armGoalX > maxX) armGoalY = Math.sqrt(maxLengthSqrd - Math.pow(armGoalX,2)) - safetyMargin; //Moves y position down to allow more room to move x position
 
         //U/D axis
-        double goalYMovement = gamepad1.left_stick_y * -0.4f;
+        double goalYMovement = gamepad2.left_stick_y * -0.4f;
         if (Math.abs(goalYMovement) < 0.1) goalYMovement = 0;
         armGoalY += goalYMovement; //Receive input
 
         if (armGoalY < 0) armGoalY = 0; //Limits on where the goal can be
-        if (armGoalY > armSegment1 + armSegment2) armGoalY = armSegment1 + armSegment2;
+        if (armGoalY > armSegment1 + armSegment2 - safetyMargin) armGoalY = armSegment1 + armSegment2;
 
-        double maxY = Math.sqrt(maxLengthSqrd - Math.pow(armGoalX,2)) - 0.005;
+        double maxY = Math.sqrt(maxLengthSqrd - Math.pow(armGoalX,2)) - safetyMargin;
         if (goalYMovement > 0 && armGoalY > maxY) armGoalX = Math.sqrt(maxLengthSqrd - Math.pow(armGoalY,2)); //Moves x position back to allow more room to move y position
+        /**/
 
     }
 
     private void moveArm(){
         //armShoulder.powerToPosition(0.4f, shoulderGoalAngle + shoulderAngleOffset, 5);
-        double shoulderCurrent = (armShoulder.getPosition() / 3.11111111) + shoulderAngleOffset; //In degrees
-        int margin = 5; //5 Degree margin
-        if (Math.abs(shoulderCurrent - shoulderGoalAngle) > margin){
-            if (shoulderCurrent < shoulderGoalAngle){
-                armShoulder.setPower(0.4);
+        double shoulderCurrent = (armShoulder.getPosition() / shoulderEncTickToDeg) + shoulderAngleOffset; //In degrees
+        double angleDiff = shoulderCurrent - shoulderGoalAngle;
+        if ((Math.abs(gamepad2.left_stick_y) < 0.1 && Math.abs(gamepad2.left_stick_x) < 0.1)) {
+            int margin = 1; //Degree margin
+            if (Math.abs(shoulderCurrent - shoulderGoalAngle) > margin) {
+                if (shoulderCurrent < shoulderGoalAngle) {
+                    armShoulder.setPower(0.25 * scaleInput(gamepad2.right_stick_y));
+                } else {
+                    armShoulder.setPower(-0.25 * scaleInput(gamepad2.right_stick_y));
+                }
             } else {
-                armShoulder.setPower(-0.4);
+                armShoulder.stop();
             }
         } else {
             armShoulder.stop();
+            armElbow1.stop();
+            armElbow2.stop();
         }
     }
 
@@ -264,8 +281,8 @@ public class AcRelicTeleOp extends OpMode{
             armWrist.incrementPosition(0.02);
         }
         if (gamepad2.x){
-            double shoulderPos = (armShoulder.getPosition() / 3.1111111) + shoulderAngleOffset;
-            double elbowPos = (armElbowEnc.getPosition() / 3.1111111) + elbowAngleOffset;
+            double shoulderPos = (armShoulder.getPosition() / shoulderEncTickToDeg) + shoulderAngleOffset;
+            double elbowPos = (armElbowEnc.getPosition() / elbowEncTicktoDeg) + elbowAngleOffset;
             double wristPos = 90 + shoulderPos - elbowPos;
 
             armWrist.setPosition((wristPos / 180) + 0.5);
@@ -303,11 +320,14 @@ public class AcRelicTeleOp extends OpMode{
         telemetry.addData("> Slow Mode", isSlowDriving);
 
         telemetry.addData("ARM","");
-        telemetry.addData("> Elbow Pos", armElbowEnc.getPosition() / 3.11111111);
-        telemetry.addData("> Shoulder Pos", armShoulder.getPosition() / 3.1111111); // 1120 / 360 = 3.11111111.....
+        telemetry.addData("> Shoulder Pos (Geared)", armShoulder.getPosition() / shoulderEncTickToDeg);
         telemetry.addData("> Shoulder Offset", shoulderAngleOffset);
         telemetry.addData("> Shoulder Goal", shoulderGoalAngle);
-        telemetry.addData("> Shoulder abs(margin)", Math.abs((armShoulder.getPosition() / 3.111111) + shoulderAngleOffset - shoulderGoalAngle));
+        telemetry.addData(">S houlder Combo", (armShoulder.getPosition() / shoulderEncTickToDeg) + shoulderAngleOffset);
+        telemetry.addData("> Shoulder abs(margin)", Math.abs((armShoulder.getPosition() / shoulderEncTickToDeg) + shoulderAngleOffset - shoulderGoalAngle));
+        telemetry.addData("> Elbow Pos", armElbowEnc.getPosition() / elbowEncTicktoDeg);
+        telemetry.addData("> Elbow Offset", elbowAngleOffset);
+        telemetry.addData("> Elbow Combo", (armElbowEnc.getPosition() / elbowEncTicktoDeg) + elbowAngleOffset);
         telemetry.addData("> Elbow Goal", elbowGoalAngle);
         telemetry.addData("> Goal Pos X", armGoalX);
         telemetry.addData("> Goal Pos Y", armGoalY);

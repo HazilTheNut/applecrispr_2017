@@ -43,7 +43,7 @@ import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVMoto
  * <p/>
  * Enables control of the robot via the gamepad
  */
-//@TeleOp(name = "TELEOP TEST", group = "Test")
+@TeleOp(name = "TELEOP TEST", group = "Test")
 public class AtTestTeleOp extends OpMode {
 
     private AtREVMotor motor;
