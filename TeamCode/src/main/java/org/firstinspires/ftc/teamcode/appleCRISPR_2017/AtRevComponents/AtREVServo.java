@@ -43,6 +43,12 @@ public class AtREVServo extends AtREVComponent {
         currentPos = motionlessPosition;
     }
 
+    public AtREVServo(String servoName, double defaultPos, boolean continuousRot){ //If you are setting a zero-motion position, then the servo must be continuous rotation
+        name = servoName;
+        isContinuousRotation = continuousRot;
+        currentPos = defaultPos;
+    }
+
     @Override
     public boolean init(HardwareMap hardwareMap) {
         servo = hardwareMap.get(Servo.class, name);
