@@ -45,18 +45,13 @@ public class AcRelicAutonomous extends LinearOpMode {
         driveBR = (AtREVMotor)revModule.add(new AtREVMotor("drive-br"));
 
         armShoulder = (AtREVMotor)revModule.add(new AtREVMotor("shoulder"));
-        armElbow1 = (AtREVServo)revModule.add(new AtREVServo("elbow-1", 0.5));
-        armElbow2 = (AtREVServo)revModule.add(new AtREVServo("elbow-2", 0.475));
-        armElbowEnc = (AtREVMotor)revModule.add(new AtREVMotor("elbowEnc"));
+        armElbowEnc = (AtREVMotor)revModule.add(new AtREVMotor("elbow"));
         armWrist = (AtREVServo)revModule.add(new AtREVServo("wrist"));
 
         suctionMotor = (AtREVMotor)revModule.add(new AtREVMotor("suction"));
 
         telemetry.addData("Init successful: ", revModule.initialize(hardwareMap));
         telemetry.update();
-
-        armElbow2.stop();
-        armElbow1.stop();
 
         driveBL.setDirection(false);
     }

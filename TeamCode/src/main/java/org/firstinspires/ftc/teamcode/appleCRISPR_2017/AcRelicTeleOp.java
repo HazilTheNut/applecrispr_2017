@@ -54,6 +54,9 @@ public class AcRelicTeleOp extends OpMode{
 
     BOTH : B            : ALL STOP
 
+
+4.5
+shoulder theta =
     */
 
     //The master robot control object!
@@ -77,14 +80,17 @@ public class AcRelicTeleOp extends OpMode{
     private boolean isSlowDriving = false;
     private boolean slowButtonPressed = false; //Intentionally lags behind reality by one loop cycle
 
-    private double armGoalX = 7.5; //Default starting position
-    private double armGoalY = 5.5;
+    private double armGoalX = 4.5; //Default starting position
+    private double armGoalY = 4.5;
     private final float armSegment1 = 14.5f; //In inches
     private final float armSegment2 = 13.375f; //In inches
 
     private double shoulderAngleOffset = 0;
     //private final double defaultElbowAngle = 0;
     private double elbowAngleOffset = 0;
+    private double lastShoulderMotorSpeed = 0;
+    private double lastElbowMotorSpeed = 0;
+    private final int maxAccel = 0;
 
     // 1120 / 360 = 3.1111111......
     private final double shoulderEncTickToDeg = 3 * 3.111111111; //Ratio is ticks / degrees. Multiplied due to gearing ratios
@@ -101,8 +107,8 @@ public class AcRelicTeleOp extends OpMode{
 
     public void init() {
 
-        double defaultShoulderAngle = 91.3103;
-        double defaultElbowAngle = 145.8516;
+        double defaultShoulderAngle = 111.68;
+        double defaultElbowAngle = 154.78;
 
         driveFL = (AtREVMotor)revModule.add(new AtREVMotor("drive-fl"));
         driveFR = (AtREVMotor)revModule.add(new AtREVMotor("drive-fr"));
@@ -171,24 +177,24 @@ public class AcRelicTeleOp extends OpMode{
             slowButtonPressed = false;
         }
 
-        double powerScalar = isSlowDriving ? 0.40 : 1;
+        double powerScalar = isSlowDriving ? 0.30 : 1;
 
         //Finally, moving!
         if (gamepad1.right_trigger > 0.1){ //Clockwise turn
-            driveFL.setPower(-1 * powerScalar);
-            driveBL.setPower(-1 * powerScalar);
-            driveFR.setPower(powerScalar);
-            driveBR.setPower(powerScalar);
+            driveFL.setPower(-1 * gamepad1.right_trigger * powerScalar);
+            driveBL.setPower(-1 * gamepad1.right_trigger * powerScalar);
+            driveFR.setPower(gamepad1.right_trigger * powerScalar);
+            driveBR.setPower(gamepad1.right_trigger * powerScalar);
         } else if (gamepad1.left_trigger > 0.1){ //Counter-clockwise turn
-            driveFL.setPower(powerScalar);
-            driveBL.setPower(powerScalar);
-            driveFR.setPower(-1 * powerScalar);
-            driveBR.setPower(-1 * powerScalar);
+            driveFL.setPower(gamepad1.left_trigger * powerScalar);
+            driveBL.setPower(gamepad1.left_trigger * powerScalar);
+            driveFR.setPower(-1 * gamepad1.left_trigger * powerScalar);
+            driveBR.setPower(-1 * gamepad1.left_trigger * powerScalar);
         } else { //Drives normally if not turning
-            driveFL.setPower(flPower);
-            driveBR.setPower(flPower);
-            driveFR.setPower(frPower);
-            driveBL.setPower(frPower);
+            driveFL.setPower(flPower * powerScalar);
+            driveBR.setPower(flPower * powerScalar);
+            driveFR.setPower(frPower * powerScalar);
+            driveBL.setPower(frPower * powerScalar);
         }
     }
 
@@ -204,12 +210,12 @@ public class AcRelicTeleOp extends OpMode{
         moveArm(); //Shoulder working, elbow too
 
         //From Direct Drive method:
-        /*
+        /**/
 
         if (gamepad2.left_trigger > 0.1){
-            armWrist.incrementPosition(-0.02);
+            armWrist.incrementPosition(-0.01);
         } else if (gamepad2.right_trigger > 0.1){
-            armWrist.incrementPosition(0.02);
+            armWrist.incrementPosition(0.01);
         }
         if (gamepad2.x){
             double shoulderPos = (armShoulder.getPosition() / shoulderEncTickToDeg) + shoulderAngleOffset;
@@ -255,6 +261,7 @@ public class AcRelicTeleOp extends OpMode{
         armGoalX += goalXMovement; //Receive input
 
         if (armGoalX < 0) armGoalX = 0; //Limits on where the goal can be
+        armGoalX = Math.min(armGoalX, armSegment1 + armSegment2 - 1);
         if (armGoalX > armSegment1 + armSegment2 - safetyMargin) armGoalX = armSegment1 + armSegment2;
 
         double maxLengthSqrd = Math.pow(armSegment1 + armSegment2,2);
@@ -279,9 +286,28 @@ public class AcRelicTeleOp extends OpMode{
         //armShoulder.powerToPosition(0.4f, shoulderGoalAngle + shoulderAngleOffset, 5);
         double shoulderCurrent = (armShoulder.getPosition() / shoulderEncTickToDeg) + shoulderAngleOffset; //In degrees
         double elbowCurrent = (armElbow.getPosition() / elbowEncTickToDeg) + elbowAngleOffset; //Also in degrees
-        if ((Math.abs(gamepad2.left_stick_y) < 0.1 && Math.abs(gamepad2.left_stick_x) < 0.1)) {
-            armShoulder.setPower(getArmMotorPower(shoulderCurrent, shoulderGoalAngle, 1, 6, 0.35 * scaleInput(gamepad2.right_stick_y)));
-            armElbow.setPower(   getArmMotorPower(elbowCurrent,    elbowGoalAngle,    1, 6, 0.35 * scaleInput(gamepad2.right_stick_y)));
+        if (gamepad2.dpad_up){
+            armElbow.setPower(0.21);
+            telemetry.addData("GamePad 2 D-UP","");
+        } else if (gamepad2.dpad_down){
+            armElbow.setPower(-0.21);
+            telemetry.addData("GamePad 2 D-DOWN","");
+        } else if (gamepad2.dpad_left){
+            armShoulder.setPower(0.25);
+            telemetry.addData("GamePad 2 D-LEFT","");
+        } else if (gamepad2.dpad_right){
+            armShoulder.setPower(-0.25);
+            telemetry.addData("GamePad 2 D-RIGHT","");
+        } else if ((Math.abs(gamepad2.left_stick_y) < 0.1 && Math.abs(gamepad2.left_stick_x) < 0.1)) {
+            // Calculate the desired encoder value
+            //if (shoulderGoalAngle/shoulderEncTickToDeg > armShoulder.getPosition()) { // shoulder angle should increase
+
+            //}
+
+
+
+            armShoulder.setPower(getArmMotorPower(shoulderCurrent, shoulderGoalAngle,                                       1, 6 , (0.225 * scaleInput(gamepad2.right_stick_y))));
+            armElbow.setPower(   getArmMotorPower(elbowCurrent,    elbowMathToActual(shoulderGoalAngle, elbowGoalAngle),    1, 11, (0.225 * scaleInput(gamepad2.right_stick_y))));
         } else {
             armShoulder.stop();
         }
@@ -321,6 +347,18 @@ public class AcRelicTeleOp extends OpMode{
         return 90 + shoulderAngle - elbowAngle;
     }
 
+    /**
+     * Converts mathematical elbow angle to the actual elbow angle
+     *
+     * This results from the elbow not being fixed to the end of segment 1 and actually being in relation to the floor
+     * @param shoulderAngle angle of the shoulder
+     * @param elbowMathAngle angle of the mathematical elbow angle
+     * @return the actual elbow angle
+     */
+    private double elbowMathToActual (double shoulderAngle, double elbowMathAngle){ return elbowMathAngle + (90 - shoulderAngle); }
+
+    private double elbowAcutalToMath (double shoulderAngle, double elbowActualAngle) { return elbowActualAngle - (90 - shoulderAngle); }
+
     private void doMiscActions() {
         //Suction
         if ((gamepad1.left_bumper || gamepad1.dpad_down) && suctionMotor.getPosition() > 0){ //Always prioritize releasing the pressure
@@ -343,25 +381,34 @@ public class AcRelicTeleOp extends OpMode{
 
     private String buildGraph(){
         String graph = "";
-        int graphcols = 50;
-        int aspectratio = 3;
-        int totalarmlength = 28;
-        int graphrows = graphcols / aspectratio / 2;
+        int graphcols = 36; //
+        float aspectratio = 1.2f; //   Height / Width
+        float totalarmlength = armSegment1 + armSegment2;
+        int graphrows = (int) (graphcols / aspectratio / 2);
 
-        int col = (int)(graphcols*armGoalX/totalarmlength);
-        int row = graphrows/2 + (int)(graphrows*armGoalY/totalarmlength);
+        // For placing a character where the arm wants to go
+        int goalCol = (int)((graphcols-1) * (armGoalX+totalarmlength) / (totalarmlength*2))+1;
+        int goalRow = graphrows - (int)((graphrows-1) * armGoalY/totalarmlength);
+
+        // For placing a character where the arm thinks it is
+        // NOT FINISHED
+        int measuredCol = (int)((graphcols-1) * (armGoalX+totalarmlength) / (totalarmlength*2))+1;
+        int measuredRow = graphrows - (int)((graphrows-1) * armGoalY/totalarmlength);
 
         // Build graph
-        for (int r=0; r<graphrows; r++) {
-            for (int c=0; c<graphcols; c++){
-                if (r==row && c==col){
+        for (int r=1; r<=graphrows; r++) {
+            for (int c=1; c<=graphcols; c++){
+                if (r==goalRow && c==goalCol){
                     graph += "▓";
                 }
-                else if (graphcols > Math.sqrt(Math.pow(graphrows/2-r,2) + Math.pow(aspectratio*(graphcols-c),2) )){
+                else if ((r==(6-3.25)/(totalarmlength/graphrows)) || (r==(6*2-3.25)/(totalarmlength/graphrows)) || // Doesn't work
+                         (r==(6*3-3.25)/(totalarmlength/graphrows)) || (r==(6*4-3.25)/(totalarmlength/graphrows)))
+                    graph += "═";
+                else if (graphcols/2 < Math.sqrt(Math.pow(aspectratio*(graphrows-r),2) + Math.pow((graphcols/2-c),2) )){
                     graph += "█";
                 }
                 else {
-                    graph += "░";
+                    graph += "▒";
                 }
             }
             graph += "\n";
@@ -371,6 +418,7 @@ public class AcRelicTeleOp extends OpMode{
     }
 
     private void updateTelemetry(){
+        // Note that the ░ character shows up as a space.  Denser drawing characters show up fine.
 
         telemetry.addData("MOVEMENT","");
         telemetry.addData("> Direction", movementDirection);
@@ -389,7 +437,8 @@ public class AcRelicTeleOp extends OpMode{
         telemetry.addData("> Elbow Pos", armElbow.getPosition() / elbowEncTickToDeg);
         telemetry.addData("> Elbow Offset", elbowAngleOffset);
         telemetry.addData("> Elbow Combo", (armElbow.getPosition() / elbowEncTickToDeg) + elbowAngleOffset);
-        telemetry.addData("> Elbow Goal", elbowGoalAngle);
+        telemetry.addData("> Elbow Goal (Math)", elbowGoalAngle);
+        telemetry.addData("> Elbow Goal (Actual)", elbowMathToActual(shoulderGoalAngle, elbowGoalAngle));
         telemetry.addData("> Goal Pos X", armGoalX);
         telemetry.addData("> Goal Pos Y", armGoalY);
         telemetry.addData("> Goal Magnitude", Math.sqrt(Math.pow(armGoalX,2) + Math.pow(armGoalY,2)));
@@ -397,13 +446,14 @@ public class AcRelicTeleOp extends OpMode{
         telemetry.addData("> Wrist Goal", (wristGoalAngle / 180) + 0.5);
         telemetry.addData("> Elbow Power", elbowPower);
         telemetry.addData("> Shoulder Power", armShoulder.getPower());
-        telemetry.addData("> Test Rendering Characters","..... ||||| ///// !!!!! :::::  ░▒▓█");
+        telemetry.addData("> Test Rendering Characters","░   ░▒▓█");
         telemetry.addData("", "\n"+buildGraph());
 
         telemetry.addData("OTHER","");
         telemetry.addData("> Suction Power", suctionMotor.getPower());
         telemetry.addData("> Suction Pos", suctionMotor.getPosition());
         telemetry.addData("> Elbow Encoder Pos", armElbow.getPosition());
+        telemetry.addData("> Shoulder Encoder Pos", armShoulder.getPosition());
 
         telemetry.update(); //The most important method to call!
     }
