@@ -12,7 +12,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class AtREVDistanceSensor extends AtREVComponent {
 
-    private DistanceSensor sensor;
+    private DistanceSensor distanceSensor;
+    private OpticalDistanceSensor ods;
 
     public AtREVDistanceSensor(String componentName) {
         name = componentName;
@@ -20,11 +21,11 @@ public class AtREVDistanceSensor extends AtREVComponent {
 
     @Override
     public boolean init(HardwareMap hardwareMap) {
-        sensor = hardwareMap.get(DistanceSensor.class, name);
-        return (sensor != null);
+        ods = hardwareMap.get(OpticalDistanceSensor.class, name);
+        return (ods != null);
     }
+    public double getLight() {return ods.getLightDetected(); }
 
-    public double getDistanceInches() {return sensor.getDistance(DistanceUnit.INCH); }
-
-    public double getDistanceCM() { return sensor.getDistance(DistanceUnit.CM); }
+    //public double getLight() {return ods.getDistance(DistanceUnit.INCH); }
+    //public double getDistanceCM() { return ods.getDistance(DistanceUnit.CM); }
 }

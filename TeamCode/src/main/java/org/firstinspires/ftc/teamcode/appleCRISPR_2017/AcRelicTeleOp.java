@@ -86,6 +86,8 @@ shoulder theta =
     private double armGoalY = 4.5;
     private final float armSegment1 = 14.5f; //In inches
     private final float armSegment2 = 13.375f; //In inches
+    private double baseHeightFromGround = 2.4; // Measurement
+    private double suctionCupHeight = 3; // Measurement.  This is about the max; the min is around 2.75
 
     private double shoulderAngleOffset = 0;
     //private final double defaultElbowAngle = 0;
@@ -124,7 +126,7 @@ shoulder theta =
 
         suctionMotor = (AtREVMotor)revModule.add(new AtREVMotor("suction"));
 
-        //distanceSensor = (AtREVDistanceSensor)revModule.add(new AtREVDistanceSensor("glyph_finder"));
+        distanceSensor = (AtREVDistanceSensor)revModule.add(new AtREVDistanceSensor("glyph_finder"));
 
         telemetry.addData("Init successful: ", revModule.initialize(hardwareMap));
         telemetry.update();
@@ -136,6 +138,9 @@ shoulder theta =
         armShoulder.initEncMode();
 
         driveBL.setDirection(false);
+
+        armElbow.setDirection(false);
+        armShoulder.setDirection(false);
     }
 
     //private int ⊙△⊙ = 4;
@@ -265,9 +270,9 @@ shoulder theta =
 
     private void goalPosMovement() {
         double safetyMargin = 0.05; //We don't want to completely ruin the kinematics with one floating point rounding error
-        /*
+
         if (gamepad2.a){
-            double distance = distanceSensor.getDistanceInches(); //Get distance
+            double distance = distanceSensor.getLight(); //Get distance
             if (distance != DistanceSensor.distanceOutOfRange){ //Checks if detection error
                 armGoalY = 6; //Sets y position (1 Glyph stack)
                 armGoalX = distance + distanceSensorXPos;
@@ -292,9 +297,22 @@ shoulder theta =
         if (goalXMovement > 0 && armGoalX > maxX) armGoalY = Math.sqrt(maxLengthSqrd - Math.pow(armGoalX,2)) - safetyMargin; //Moves y position down to allow more room to move x position
 
         //U/D axis
-        double goalYMovement = gamepad2.left_stick_y * -0.4f;
+        double goalYMovement = 0;
+        /*/ Buttons to set height.  To be implemented later.
+        if (gamepad2.x){
+            armGoalY = 6 - baseHeightFromGround + suctionCupHeight;
+        }
+        else if (gamepad2.y){
+            armGoalY = 6*2 - baseHeightFromGround + suctionCupHeight;
+        }
+        else if (gamepad2.b){
+            armGoalY = 6*3 - baseHeightFromGround + suctionCupHeight;
+        } else {
+        */
+        goalYMovement = gamepad2.left_stick_y * -0.4f;
         if (Math.abs(goalYMovement) < 0.1) goalYMovement = 0;
         armGoalY += goalYMovement; //Receive input
+        //}
 
         if (armGoalY < 0) armGoalY = 0; //Limits on where the goal can be
         if (armGoalY > armSegment1 + armSegment2 - safetyMargin) armGoalY = armSegment1 + armSegment2;
@@ -461,14 +479,16 @@ shoulder theta =
         telemetry.addData("> Wrist Goal", (wristGoalAngle / 180) + 0.5);
         telemetry.addData("> Elbow Power", elbowPower);
         telemetry.addData("> Shoulder Power", armShoulder.getPower());
-        telemetry.addData("> Test Rendering Characters","░   ░▒▓█");
-        telemetry.addData("", "\n"+buildGraph());
 
         telemetry.addData("OTHER","");
         telemetry.addData("> Suction Power", suctionMotor.getPower());
         telemetry.addData("> Suction Pos", suctionMotor.getPosition());
         telemetry.addData("> Elbow Encoder Pos", armElbow.getPosition());
         telemetry.addData("> Shoulder Encoder Pos", armShoulder.getPosition());
+        telemetry.addData("> Distance Sensor Value", distanceSensor.getLight());
+
+        telemetry.addData("GRAPH","");
+        telemetry.addData("", "\n"+buildGraph());
 
         telemetry.update(); //The most important method to call!
     }
