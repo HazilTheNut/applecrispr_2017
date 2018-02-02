@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.appleCRISPR_2017;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.*;
 
@@ -72,6 +73,7 @@ shoulder theta =
     private AtREVMotor armShoulder;
     private AtREVServo armWrist;
     private AtREVMotor armElbow;
+    private AtREVDistanceSensor distanceSensor;
 
     //Suction
     private AtREVMotor suctionMotor;
@@ -88,6 +90,7 @@ shoulder theta =
     private double shoulderAngleOffset = 0;
     //private final double defaultElbowAngle = 0;
     private double elbowAngleOffset = 0;
+    private double distanceSensorXPos = 7.5;
     private double lastShoulderMotorSpeed = 0;
     private double lastElbowMotorSpeed = 0;
     private final int maxAccel = 0;
@@ -121,21 +124,29 @@ shoulder theta =
 
         suctionMotor = (AtREVMotor)revModule.add(new AtREVMotor("suction"));
 
+        //distanceSensor = (AtREVDistanceSensor)revModule.add(new AtREVDistanceSensor("glyph_finder"));
+
         telemetry.addData("Init successful: ", revModule.initialize(hardwareMap));
         telemetry.update();
 
         shoulderAngleOffset = defaultShoulderAngle - (armShoulder.getPosition() / shoulderEncTickToDeg);
         elbowAngleOffset    = defaultElbowAngle - (armElbow.getPosition() / elbowEncTickToDeg);
 
+        armElbow.initEncMode();
+        armShoulder.initEncMode();
 
         driveBL.setDirection(false);
     }
 
+    //private int ⊙△⊙ = 4;
+
     @Override
+
     public void loop() {
         if (gamepad1.b || gamepad2.b) { //All stop button
             revModule.allStop();
-            telemetry.addData(": =X= !!! ALL STOP !!! =X=","");
+            telemetry.addData(": =X= !!! ALL STOP !!! =X=\n ಠ_ಠ  \n(((φ(◎ロ◎;)φ)))\n((((爾△爾))))\n"+
+                    "ε=ε=(っ*´□`)っ  \n    =͟͟͞͞ =͟͟͞͞ ﾍ( ´Д`)ﾉ","");
         } else {
             //The various functions of the robot are divided up for your convenience
 
@@ -209,13 +220,14 @@ shoulder theta =
 
         moveArm(); //Shoulder working, elbow too
 
-        //From Direct Drive method:
-        /**/
+        operateWrist(); //Run wrist methods
+    }
 
+    private void operateWrist(){
         if (gamepad2.left_trigger > 0.1){
-            armWrist.incrementPosition(-0.01);
+            armWrist.incrementPosition(-0.025);
         } else if (gamepad2.right_trigger > 0.1){
-            armWrist.incrementPosition(0.01);
+            armWrist.incrementPosition(0.025);
         }
         if (gamepad2.x){
             double shoulderPos = (armShoulder.getPosition() / shoulderEncTickToDeg) + shoulderAngleOffset;
@@ -227,7 +239,6 @@ shoulder theta =
             armWrist.setPosition(0.5);
         }
 
-        /**/
     }
 
     private void calculateArmAngles(){
@@ -253,8 +264,20 @@ shoulder theta =
     }
 
     private void goalPosMovement() {
-
         double safetyMargin = 0.05; //We don't want to completely ruin the kinematics with one floating point rounding error
+        /*
+        if (gamepad2.a){
+            double distance = distanceSensor.getDistanceInches(); //Get distance
+            if (distance != DistanceSensor.distanceOutOfRange){ //Checks if detection error
+                armGoalY = 6; //Sets y position (1 Glyph stack)
+                armGoalX = distance + distanceSensorXPos;
+                if (Math.sqrt(Math.pow(armGoalX,2) + Math.pow(armGoalY,2)) > armSegment1 + armSegment2 - safetyMargin){
+                    armGoalX = Math.sqrt(Math.pow(armSegment1 + armSegment2 - safetyMargin, 2) - Math.pow(armGoalY,2));
+                }
+            }
+        }
+        /**/
+
         //I/O axis
         double goalXMovement = gamepad2.left_stick_x * -0.4f;
         if (Math.abs(goalXMovement) < 0.1) goalXMovement = 0;
@@ -293,24 +316,29 @@ shoulder theta =
             armElbow.setPower(-0.21);
             telemetry.addData("GamePad 2 D-DOWN","");
         } else if (gamepad2.dpad_left){
-            armShoulder.setPower(0.25);
+            armShoulder.setPower(0.2);
             telemetry.addData("GamePad 2 D-LEFT","");
         } else if (gamepad2.dpad_right){
-            armShoulder.setPower(-0.25);
+            armShoulder.setPower(-0.2);
             telemetry.addData("GamePad 2 D-RIGHT","");
-        } else if ((Math.abs(gamepad2.left_stick_y) < 0.1 && Math.abs(gamepad2.left_stick_x) < 0.1)) {
-            // Calculate the desired encoder value
-            //if (shoulderGoalAngle/shoulderEncTickToDeg > armShoulder.getPosition()) { // shoulder angle should increase
-
-            //}
-
-
-
-            armShoulder.setPower(getArmMotorPower(shoulderCurrent, shoulderGoalAngle,                                       1, 6 , (0.225 * scaleInput(gamepad2.right_stick_y))));
-            armElbow.setPower(   getArmMotorPower(elbowCurrent,    elbowMathToActual(shoulderGoalAngle, elbowGoalAngle),    1, 11, (0.225 * scaleInput(gamepad2.right_stick_y))));
         } else {
-            armShoulder.stop();
+            armShoulder.PIDpower((0.225 * scaleInput(gamepad2.right_stick_y)), (int)(shoulderGoalAngle * shoulderEncTickToDeg));
+            armElbow.PIDpower((0.225 * scaleInput(gamepad2.right_stick_y)), (int)(elbowMathToActual(shoulderGoalAngle, elbowGoalAngle) * elbowEncTickToDeg));
         }
+        /*
+            if ((Math.abs(gamepad2.left_stick_y) < 0.1 && Math.abs(gamepad2.left_stick_x) < 0.1)) {
+                // Calculate the desired encoder value
+
+                //}
+
+
+
+                armShoulder.setPower(getArmMotorPower(shoulderCurrent, shoulderGoalAngle,                                       1, 6 , (0.225 * scaleInput(gamepad2.right_stick_y))));
+                armElbow.setPower(   getArmMotorPower(elbowCurrent,    elbowMathToActual(shoulderGoalAngle, elbowGoalAngle),    1, 11, (0.225 * scaleInput(gamepad2.right_stick_y))));
+            } else {
+                armShoulder.stop();
+            }
+        /**/
     }
 
     private double getArmMotorPower(double currentPos, double goalPos, int margin, int slowZone, double maxPower){
@@ -327,24 +355,10 @@ shoulder theta =
         double shoulderPower = scaleInput(gamepad2.left_stick_y) * 0.25;
         armShoulder.setPower(shoulderPower);
         armElbow.setPower(scaleInput(gamepad2.right_stick_y) * 0.25);
-        if (gamepad2.left_trigger > 0.1){
-            armWrist.incrementPosition(-0.01);
-        } else if (gamepad2.right_trigger > 0.1){
-            armWrist.incrementPosition(0.01);
-        }
-        if (gamepad2.x){
-            double shoulderPos = (armShoulder.getPosition() / shoulderEncTickToDeg) + shoulderAngleOffset;
-            double elbowPos = (armElbow.getPosition() / elbowEncTickToDeg) + elbowAngleOffset;
-            wristGoalAngle = calculateWristPos(shoulderPos, elbowPos);
-
-            armWrist.setPosition((wristGoalAngle / 180) + 0.5);
-        } else if (gamepad2.y){
-            armWrist.setPosition(0.5);
-        }
     }
 
     private double calculateWristPos (double shoulderAngle, double elbowAngle){
-        return 90 + shoulderAngle - elbowAngle;
+        return 90 + shoulderAngle - elbowActualToMath(shoulderAngle, elbowAngle);
     }
 
     /**
@@ -357,7 +371,7 @@ shoulder theta =
      */
     private double elbowMathToActual (double shoulderAngle, double elbowMathAngle){ return elbowMathAngle + (90 - shoulderAngle); }
 
-    private double elbowAcutalToMath (double shoulderAngle, double elbowActualAngle) { return elbowActualAngle - (90 - shoulderAngle); }
+    private double elbowActualToMath(double shoulderAngle, double elbowActualAngle) { return elbowActualAngle - (90 - shoulderAngle); }
 
     private void doMiscActions() {
         //Suction
@@ -382,7 +396,7 @@ shoulder theta =
     private String buildGraph(){
         String graph = "";
         int graphcols = 36; //
-        float aspectratio = 1.2f; //   Height / Width
+        float aspectratio = 1.0f; //   Height / Width
         float totalarmlength = armSegment1 + armSegment2;
         int graphrows = (int) (graphcols / aspectratio / 2);
 
@@ -401,11 +415,12 @@ shoulder theta =
                 if (r==goalRow && c==goalCol){
                     graph += "▓";
                 }
-                else if ((r==(6-3.25)/(totalarmlength/graphrows)) || (r==(6*2-3.25)/(totalarmlength/graphrows)) || // Doesn't work
-                         (r==(6*3-3.25)/(totalarmlength/graphrows)) || (r==(6*4-3.25)/(totalarmlength/graphrows)))
-                    graph += "═";
                 else if (graphcols/2 < Math.sqrt(Math.pow(aspectratio*(graphrows-r),2) + Math.pow((graphcols/2-c),2) )){
                     graph += "█";
+                }
+                else if ((r==(int)((6-3.25)/(totalarmlength/graphrows))) || (r==(int)((6*2-3.25)/(totalarmlength/graphrows))) ||
+                        (r==(int)((6*3-3.25)/(totalarmlength/graphrows))) || (r==(int)((6*4-3.25)/(totalarmlength/graphrows)))) {
+                    graph += "═";
                 }
                 else {
                     graph += "▒";

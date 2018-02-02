@@ -86,4 +86,13 @@ public class AtREVMotor extends AtREVComponent {
         setPower(0);
     }
 
+    public void initEncMode(){ motor.setMode(DcMotor.RunMode.RUN_TO_POSITION); }
+
+    public void PIDpower( double power, int position){
+        if (motor.getMode().equals(DcMotor.RunMode.RUN_TO_POSITION)){
+            motor.setPower(power);
+            motor.setTargetPosition(position);
+        }
+    }
+
 }
