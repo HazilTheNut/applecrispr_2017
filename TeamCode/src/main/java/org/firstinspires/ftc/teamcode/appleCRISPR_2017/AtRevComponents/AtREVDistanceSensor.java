@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents;
 
+import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.AnalogSensor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
@@ -15,17 +17,23 @@ public class AtREVDistanceSensor extends AtREVComponent {
     private DistanceSensor distanceSensor;
     private OpticalDistanceSensor ods;
 
+    private AnalogInput analogSensor;
+
+    private double defaultVoltsPerInch = 3.3/512;
+
     public AtREVDistanceSensor(String componentName) {
         name = componentName;
     }
 
     @Override
     public boolean init(HardwareMap hardwareMap) {
-        ods = hardwareMap.get(OpticalDistanceSensor.class, name);
-        return (ods != null);
+        analogSensor = hardwareMap.get(AnalogInput.class, name);
+        return (analogSensor != null);
     }
-    public double getLight() {return ods.getLightDetected(); }
 
-    //public double getLight() {return ods.getDistance(DistanceUnit.INCH); }
-    //public double getDistanceCM() { return ods.getDistance(DistanceUnit.CM); }
+    public double reportRawVoltage() { return analogSensor.getVoltage(); }
+
+    public double reportDistance(double voltage, double voltsPerInch) { return voltage/voltsPerInch; }
+
+    public double reportDistance() { return reportDistance(reportRawVoltage(), defaultVoltsPerInch); }
 }

@@ -73,7 +73,10 @@ shoulder theta =
     private AtREVMotor armShoulder;
     private AtREVServo armWrist;
     private AtREVMotor armElbow;
+
+    //Sensors
     private AtREVDistanceSensor distanceSensor;
+    private AtREVColorSensor colorSensor;
 
     //Suction
     private AtREVMotor suctionMotor;
@@ -127,6 +130,7 @@ shoulder theta =
         suctionMotor = (AtREVMotor)revModule.add(new AtREVMotor("suction"));
 
         distanceSensor = (AtREVDistanceSensor)revModule.add(new AtREVDistanceSensor("glyph_finder"));
+        colorSensor = (AtREVColorSensor)revModule.add(new AtREVColorSensor("color_sensor"));
 
         telemetry.addData("Init successful: ", revModule.initialize(hardwareMap));
         telemetry.update();
@@ -134,13 +138,13 @@ shoulder theta =
         shoulderAngleOffset = defaultShoulderAngle - (armShoulder.getPosition() / shoulderEncTickToDeg);
         elbowAngleOffset    = defaultElbowAngle - (armElbow.getPosition() / elbowEncTickToDeg);
 
-        armElbow.initEncMode();
-        armShoulder.initEncMode();
+        //armElbow.initEncMode();
+        //armShoulder.initEncMode();
 
         driveBL.setDirection(false);
 
-        armElbow.setDirection(false);
-        armShoulder.setDirection(false);
+        //armElbow.setDirection(false);
+        //armShoulder.setDirection(false);
     }
 
     //private int ⊙△⊙ = 4;
@@ -270,7 +274,8 @@ shoulder theta =
 
     private void goalPosMovement() {
         double safetyMargin = 0.05; //We don't want to completely ruin the kinematics with one floating point rounding error
-
+        double goalMovementScalar = -1f;
+        /*
         if (gamepad2.a){
             double distance = distanceSensor.getLight(); //Get distance
             if (distance != DistanceSensor.distanceOutOfRange){ //Checks if detection error
@@ -284,7 +289,7 @@ shoulder theta =
         /**/
 
         //I/O axis
-        double goalXMovement = gamepad2.left_stick_x * -0.4f;
+        double goalXMovement = gamepad2.left_stick_x * goalMovementScalar;
         if (Math.abs(goalXMovement) < 0.1) goalXMovement = 0;
         armGoalX += goalXMovement; //Receive input
 
@@ -309,12 +314,12 @@ shoulder theta =
             armGoalY = 6*3 - baseHeightFromGround + suctionCupHeight;
         } else {
         */
-        goalYMovement = gamepad2.left_stick_y * -0.4f;
+        goalYMovement = gamepad2.left_stick_y * goalMovementScalar;
         if (Math.abs(goalYMovement) < 0.1) goalYMovement = 0;
         armGoalY += goalYMovement; //Receive input
         //}
 
-        if (armGoalY < 0) armGoalY = 0; //Limits on where the goal can be
+        if (armGoalY < -2) armGoalY = -2; //Limits on where the goal can be
         if (armGoalY > armSegment1 + armSegment2 - safetyMargin) armGoalY = armSegment1 + armSegment2;
 
         double maxY = Math.sqrt(maxLengthSqrd - Math.pow(armGoalX,2)) - safetyMargin;
@@ -339,23 +344,18 @@ shoulder theta =
         } else if (gamepad2.dpad_right){
             armShoulder.setPower(-0.2);
             telemetry.addData("GamePad 2 D-RIGHT","");
+        /**/
+            //armShoulder.PIDpower((0.225 * scaleInput(gamepad2.right_stick_y)), (int)(shoulderGoalAngle * shoulderEncTickToDeg));
+            //armElbow.PIDpower((0.225 * scaleInput(gamepad2.right_stick_y)), (int)(elbowMathToActual(shoulderGoalAngle, elbowGoalAngle) * elbowEncTickToDeg));
+        /**/
+        } else if (gamepad2.right_stick_y > -0.5) {
+            // Calculate the desired encoder value
+            armShoulder.setPower(getArmMotorPower(shoulderCurrent, shoulderGoalAngle,                                       1, 10 , 0.20 + (0.1 * scaleInput(gamepad2.right_stick_y))));
+            armElbow.setPower(   getArmMotorPower(elbowCurrent,    elbowMathToActual(shoulderGoalAngle, elbowGoalAngle),    1, 10,  0.20 + (0.1 * scaleInput(gamepad2.right_stick_y))));
         } else {
-            armShoulder.PIDpower((0.225 * scaleInput(gamepad2.right_stick_y)), (int)(shoulderGoalAngle * shoulderEncTickToDeg));
-            armElbow.PIDpower((0.225 * scaleInput(gamepad2.right_stick_y)), (int)(elbowMathToActual(shoulderGoalAngle, elbowGoalAngle) * elbowEncTickToDeg));
+            armShoulder.stop();
+            armElbow.stop();
         }
-        /*
-            if ((Math.abs(gamepad2.left_stick_y) < 0.1 && Math.abs(gamepad2.left_stick_x) < 0.1)) {
-                // Calculate the desired encoder value
-
-                //}
-
-
-
-                armShoulder.setPower(getArmMotorPower(shoulderCurrent, shoulderGoalAngle,                                       1, 6 , (0.225 * scaleInput(gamepad2.right_stick_y))));
-                armElbow.setPower(   getArmMotorPower(elbowCurrent,    elbowMathToActual(shoulderGoalAngle, elbowGoalAngle),    1, 11, (0.225 * scaleInput(gamepad2.right_stick_y))));
-            } else {
-                armShoulder.stop();
-            }
         /**/
     }
 
@@ -363,9 +363,11 @@ shoulder theta =
         double relativePos = Math.abs(currentPos - goalPos);
         if (relativePos < margin) return 0;
         int sign = 1;
-        if (currentPos < goalPos) sign = -1;
+        if (currentPos > goalPos) sign = -1;
         double power = maxPower;
-        if (relativePos < slowZone) power = maxPower * Math.sin( (Math.PI / 2) * (relativePos / slowZone) ); //Smoothly scale power down to zero when close to margin
+        if (relativePos < slowZone) power *= (relativePos / slowZone); //Smoothly scale power down to zero when close to margin
+        double powerMinimum = 0.125;
+        if (power < powerMinimum) power = powerMinimum;
         return power * sign;
     }
 
@@ -477,15 +479,18 @@ shoulder theta =
         telemetry.addData("> Goal Magnitude", Math.sqrt(Math.pow(armGoalX,2) + Math.pow(armGoalY,2)));
         telemetry.addData("> Wrist Pos", armWrist.getPosition());
         telemetry.addData("> Wrist Goal", (wristGoalAngle / 180) + 0.5);
-        telemetry.addData("> Elbow Power", elbowPower);
+        telemetry.addData("> Elbow Power", armElbow.getPower());
         telemetry.addData("> Shoulder Power", armShoulder.getPower());
+        telemetry.addData("> GamePad 2 RS y", gamepad2.right_stick_y);
 
         telemetry.addData("OTHER","");
         telemetry.addData("> Suction Power", suctionMotor.getPower());
         telemetry.addData("> Suction Pos", suctionMotor.getPosition());
         telemetry.addData("> Elbow Encoder Pos", armElbow.getPosition());
         telemetry.addData("> Shoulder Encoder Pos", armShoulder.getPosition());
-        telemetry.addData("> Distance Sensor Value", distanceSensor.getLight());
+        telemetry.addData("> Color RED", colorSensor.getRed());
+        telemetry.addData("> Color BLUE", colorSensor.getBlue());
+        telemetry.addData("> Raw Voltage Distance: ", distanceSensor.reportRawVoltage());
 
         telemetry.addData("GRAPH","");
         telemetry.addData("", "\n"+buildGraph());
