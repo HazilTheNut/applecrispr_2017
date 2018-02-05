@@ -101,7 +101,8 @@ shoulder theta =
     private final int maxAccel = 0;
 
     // 1120 / 360 = 3.1111111......
-    private final double shoulderEncTickToDeg = 3 * 3.111111111; //Ratio is ticks / degrees. Multiplied due to gearing ratios
+    // 1680 / 360 = 4.6666666......
+    private final double shoulderEncTickToDeg = 3 * 4.666666666; //Ratio is ticks / degrees. Multiplied due to gearing ratios
     private final double elbowEncTickToDeg = 2.5 * 3.111111111; //Ratio is ticks / degrees.
 
 
