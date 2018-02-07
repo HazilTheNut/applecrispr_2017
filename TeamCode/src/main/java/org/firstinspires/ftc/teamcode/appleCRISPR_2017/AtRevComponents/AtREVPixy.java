@@ -9,12 +9,30 @@ import com.qualcomm.robotcore.hardware.I2cDeviceSynchImpl;
  * Created by Zach on 2/4/2018.
  */
 
+/**
+ * I used the pixy's I2C lego protocol, because it was simple and had what we needed (KISS)
+ * In this protocol you query the pixy for data. depending on the registered query it will
+ * return an array with 5 or 6 value describing only the LARGEST object detected. this
+ * can be done for all signatures at once or for any individual signature. The values retured
+ * are the coordinates and size of the object in pixy pixels. Additionally querying all signatures
+ * will return the signature and querying a specific signature will return the number of objects
+ * of that signature detected as well as data on the largest detected object of that signature.
+ * There is also functionality for color codes, but I did not spend time implementing it as we do not
+ * need it. I implemented all the queries I think people might want to make in the future - even though
+ * we only need X position - for the sake of our posterity. See ATJewelSensor for our usage.
+ *
+ * link to pixy reference: http://cmucam.org/attachments/1290/Pixy_LEGO_Protocol_1.0.pdf
+ *
+ * reference to I2C can be found in java docs (applecrispr_2017\doc\javadoc)
+ */
 public class AtREVPixy extends AtREVComponent {
 
+    //I2C classes
     private I2cDevice pixy;
     private I2cDeviceSynchImpl dataQuerier;
     private I2cAddr pixyAddress = I2cAddr.create8bit(0x54);
 
+    //Constants
     public final int MAX_X = 255;
     public final int MAX_Y = 199;
     public final int MAX_W = 255;
@@ -35,9 +53,12 @@ public class AtREVPixy extends AtREVComponent {
 
     private byte[] getLargestDetectedObj(int signature)
     {
+        //querying 0x51-57 returns data for largest object of signature as an array: [num of sig. detected,X,Y,Width,Height]
         if(signature>0 && signature<6) { return dataQuerier.read(0x50+signature, 5); }
+        //Not a valid signature
         else { return null;}
     }
+    //querying 0x50 returns data for largest object as an array: [signature,",X,Y,Width,Height]
     private byte[] getLargestDetectedObj()
     {
         return dataQuerier.read(0x50, 6);
@@ -67,6 +88,7 @@ public class AtREVPixy extends AtREVComponent {
 
     public int getLargestDetectedObjSig()
     {
+        //this should combine the two bytes into an int signature, but I might have gotten it backwards (if it is not in big edian?)
         return ((int)getLargestDetectedObj()[0] << 8) | getLargestDetectedObj()[1];
     }
     public int getLargestDetectedObjX()
@@ -88,6 +110,7 @@ public class AtREVPixy extends AtREVComponent {
 
     public int[] getLargestDectedObjInfo(int signature)
     {
+        //fill array with array returned by pixy, then reuturn that array
         byte[] objBytes = getLargestDetectedObj(signature);
         int[] objInfo = new int[5];
         for(int i=0; i<5; i++) { objInfo[i] = objBytes[i]; }
