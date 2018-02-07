@@ -86,7 +86,7 @@ shoulder theta =
     private boolean isSlowDriving = false;
     private boolean slowButtonPressed = false; //Intentionally lags behind reality by one loop cycle
 
-    private long previousLoopTime = 0;
+    private long startingTimestamp = 0;
     private double timeElapsedSinceLastLoop = 0; //CAREFUL! its in milliseconds
     private double shoulderPreviousPosition = 0; //In degrees
     private double elbowPreviousPosition = 0; //Also in degrees
@@ -118,6 +118,9 @@ shoulder theta =
     private double elbowGoalAngle = 0; //In degrees
     private double wristGoalAngle = 0; //In degrees
     private double elbowPower = 0;
+
+    private ArrayList<Long> timeLog = new ArrayList<>();
+
     @Override
 
     public void init() {
@@ -153,17 +156,19 @@ shoulder theta =
         //armElbow.setDirection(false);
         //armShoulder.setDirection(false);
 
-        previousLoopTime = System.currentTimeMillis();
+        startingTimestamp = System.currentTimeMillis();
         shoulderPreviousPosition = armShoulder.getPosition();
         elbowPreviousPosition = armElbow.getPosition();
+
+        timeLog.add(1L);
+        timeLog.add(0L);
     }
 
     //private int ⊙△⊙ = 4;
 
     @Override
-
     public void loop() {
-        timeElapsedSinceLastLoop = (double)(System.currentTimeMillis() - previousLoopTime) / 1000;
+        timeElapsedSinceLastLoop = timeLog.get(1) - timeLog.get(0);
 
         if (gamepad1.b || gamepad2.b) { //All stop button
             revModule.allStop();
@@ -181,10 +186,11 @@ shoulder theta =
 
         updateTelemetry(); //Always in progress
 
-        previousLoopTime = System.currentTimeMillis();
-
         shoulderPreviousPosition = armShoulder.getPosition();
         elbowPreviousPosition = armElbow.getPosition();
+
+        timeLog.add(System.currentTimeMillis());
+        timeLog.remove(0); //removing at index of 0 - the bottom of the stack
     }
 
     private void doMovement(){
@@ -387,30 +393,35 @@ shoulder theta =
 
     private void moveArm(){
         //armShoulder.powerToPosition(0.4f, shoulderGoalAngle + shoulderAngleOffset, 5);
-        double shoulderCurrent = getShoulderPos(); //In degrees
         double elbowCurrent = getElbowActualPos(); //Also in degrees
-        if (gamepad2.dpad_up){
-            armElbow.setPower(0.21);
+        if (gamepad2.dpad_up){ //Increases enc. pos
+            //armElbow.setPower(0.21);
+            regulatedMotorSpeed(armElbow, elbowPreviousPosition, 70);
             telemetry.addData("GamePad 2 D-UP","");
-        } else if (gamepad2.dpad_down){
-            armElbow.setPower(-0.21);
+        } else if (gamepad2.dpad_down){ //Decreases enc. pos
+            //armElbow.setPower(-0.21);
+            regulatedMotorSpeed(armElbow, elbowPreviousPosition, -70);
             telemetry.addData("GamePad 2 D-DOWN","");
-        } else if (gamepad2.dpad_left){
-            armShoulder.setPower(0.2);
+        } else if (gamepad2.dpad_left){ //Increases enc. pos
+            //armShoulder.setPower(0.2);
+            regulatedMotorSpeed(armShoulder, shoulderPreviousPosition, 80);
             telemetry.addData("GamePad 2 D-LEFT","");
-        } else if (gamepad2.dpad_right){
-            armShoulder.setPower(-0.2);
+        } else if (gamepad2.dpad_right){ //Decreases enc. pos
+            //armShoulder.setPower(-0.2);
+            regulatedMotorSpeed(armShoulder, shoulderPreviousPosition, -80);
             telemetry.addData("GamePad 2 D-RIGHT","");
         /**/
             //armShoulder.PIDpower((0.225 * scaleInput(gamepad2.right_stick_y)), (int)(shoulderGoalAngle * shoulderEncTickToDeg));
             //armElbow.PIDpower((0.225 * scaleInput(gamepad2.right_stick_y)), (int)(elbowMathToActual(shoulderGoalAngle, elbowGoalAngle) * elbowEncTickToDeg));
-        /*
+        /**/
         } else if (gamepad2.right_stick_y > -0.5) {
             // Calculate the desired encoder value
-            armShoulder.setPower(getArmMotorPower(shoulderCurrent, shoulderGoalAngle,                                       1, 10 , 0.20 + (0.1 * scaleInput(gamepad2.right_stick_y))));
-            armElbow.setPower(   getArmMotorPower(elbowCurrent,    elbowMathToActual(shoulderGoalAngle, elbowGoalAngle),    1, 10,  0.20 + (0.1 * scaleInput(gamepad2.right_stick_y))));
+            double shoulderSpeed = getArmMotorSpeed(getShoulderPos(),    shoulderGoalAngle,     1, 0 , 40);
+            double elbowSpeed =    getArmMotorSpeed(getElbowActualPos(), elbowGoalAngle,        1, 0 , 35);
+            regulatedMotorSpeed(armShoulder, shoulderPreviousPosition, shoulderSpeed);
+            regulatedMotorSpeed(armElbow,    elbowPreviousPosition,    elbowSpeed);
         }
-        /**/
+        /*
         } else {
             armShoulder.stop();
             armElbow.stop();
@@ -418,7 +429,22 @@ shoulder theta =
         /**/
     }
 
-    private double getArmMotorPower(double currentPos, double goalPos, int margin, int slowZone, double maxPower){
+    private void regulatedMotorSpeed(AtREVMotor motor, double prevPos, double goalSpeed){
+        double speed = 1000 * (motor.getPosition() - prevPos) / timeElapsedSinceLastLoop; //In motor ticks / second
+        telemetry.addData("> Regulated Drive", "Measured " + (int)speed + " Goal " + (int)goalSpeed);
+        telemetry.addData("> Regulated Drive", "Elapsed: " + timeElapsedSinceLastLoop);
+        double speedDifference = goalSpeed - speed;
+        double adjustmentAmount = (0.01 * Math.abs(speedDifference / goalSpeed));
+        if (Math.abs(speed) < Math.abs(goalSpeed)) adjustmentAmount = Math.max(adjustmentAmount, 0.01); //Ensures no motor lockup
+        if (speed < goalSpeed){
+            motor.setPower(motor.getPower() + adjustmentAmount);
+        }
+        if (speed > goalSpeed){
+            motor.setPower(motor.getPower() - adjustmentAmount);
+        }
+    }
+
+    private double getArmMotorSpeed(double currentPos, double goalPos, int margin, int slowZone, double maxPower){
         double relativePos = Math.abs(currentPos - goalPos);
         if (relativePos < margin) return 0;
         int sign = 1;
@@ -554,9 +580,9 @@ shoulder theta =
 
         telemetry.addData("> Time since last loop", timeElapsedSinceLastLoop);
         telemetry.addData("> Delta Shoulder Pos", armShoulder.getPosition() - shoulderPreviousPosition);
-        telemetry.addData("> Shoulder ticks / second", Math.abs(armShoulder.getPosition() - shoulderPreviousPosition) / timeElapsedSinceLastLoop);
+        telemetry.addData("> Shoulder ticks / second", 1000 * (armShoulder.getPosition() - shoulderPreviousPosition) / timeElapsedSinceLastLoop);
         telemetry.addData("> Delta Elbow Pos", armElbow.getPosition() - elbowPreviousPosition);
-        telemetry.addData("> Elbow ticks / second", Math.abs(armElbow.getPosition() - elbowPreviousPosition) / timeElapsedSinceLastLoop);
+        telemetry.addData("> Elbow ticks / second", 1000 * (armElbow.getPosition() - elbowPreviousPosition) / timeElapsedSinceLastLoop);
         telemetry.addData("> Time of elbow power", elbowPowerEndTime - elbowPowerStartTime);
         telemetry.addData("","");
 
