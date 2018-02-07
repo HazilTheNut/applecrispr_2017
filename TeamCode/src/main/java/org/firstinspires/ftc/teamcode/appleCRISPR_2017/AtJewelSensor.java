@@ -7,11 +7,16 @@ import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVPixy
  */
 
 public class AtJewelSensor extends AtREVPixy {
-    private final int RED = 1;
-    private final int BLUE = 2;
-    private final int LEFT = 0;
-    private final int RIGHT = 1;
-    private final int FAILURE = -1;
+    public final static int RED = 1;
+    public final static int BLUE = 2;
+    public final static int LEFT = 0;
+    public final static int RIGHT = 1;
+    public final static int FAILURE = -1;
+
+    public AtJewelSensor(String name)
+    {
+        super(name);
+    }
 
     private boolean checkJewelsSeen()
     {

@@ -20,6 +20,11 @@ public class AtREVPixy extends AtREVComponent {
     public final int MAX_W = 255;
     public final int MAX_H = 200;
 
+    public AtREVPixy(String name)
+    {
+        super.name = name;
+    }
+
     @Override
     public boolean init(HardwareMap hardwareMap){
         pixy = hardwareMap.i2cDevice.get("pixy");
