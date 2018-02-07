@@ -514,11 +514,41 @@ shoulder theta =
         int measuredCol = (int)((graphcols-1) * (armGoalX+totalarmlength) / (totalarmlength*2))+1;
         int measuredRow = graphrows - (int)((graphrows-1) * armGoalY/totalarmlength);
 
+        int fill = Math.round((16*suctionMotor.getPosition())/2200);
+        int fillBottom = fill<8 ? fill : 8;
+        int fillTop = fill>8 ? fill-8 : 0;
+
+        String[] barArray = {"▒","▁","▂","▃","▄","▅","▆","▇","█"};
+
         // Build graph
         for (int r=1; r<=graphrows; r++) {
             for (int c=1; c<=graphcols; c++){
                 if (r==goalRow && c==goalCol){
                     graph += "▓";
+                }
+                else if(c==34 && r==1)
+                {
+                    graph += "▄";
+                }
+                else if(c==33 && (r==2 || r==3))
+                {
+                    graph += "▐";
+                }
+                else if(c==35 && (r==2 || r==3))
+                {
+                    graph += "▌";
+                }
+                else if(c==34 && r==2)
+                {
+                    graph += barArray[fillTop];
+                }
+                else if(c==34 && r==3)
+                {
+                    graph += barArray[fillBottom];
+                }
+                else if(c==34 && r==4)
+                {
+                    graph += "▀";
                 }
                 else if (graphcols/2 < Math.sqrt(Math.pow(aspectratio*(graphrows-r),2) + Math.pow((graphcols/2-c),2) )){
                     graph += "█";
