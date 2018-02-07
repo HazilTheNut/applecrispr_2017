@@ -33,7 +33,7 @@ public class AcRelicAutonomousRed extends LinearOpMode {
     private AtJewelSensor jewelSensor;
 
     //Constants
-    private static final int turnTime = 400;
+    private static final int turnTime = 400; // GUESS
 
     public void ourInit() {
 
@@ -95,7 +95,7 @@ public class AcRelicAutonomousRed extends LinearOpMode {
                 sleep(100);
         }
 
-        //Parking (driving forward because we are on red side)
+        //Parking (driving forward because we are on red side) GUESS
         driveFL.setPower(1);
         driveBL.setPower(1);
         driveBR.setPower(1);
