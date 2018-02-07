@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVServ
  * Created by Zach on 2/6/2018.
  */
 
-@Autonomous(name = "Stromboli Auton", group = "Autonomous")
+@Autonomous(name = "Stromboli AutonRed", group = "Autonomous")
 public class AcRelicAutonomousRed extends LinearOpMode {
 
     //The master robot control object!
