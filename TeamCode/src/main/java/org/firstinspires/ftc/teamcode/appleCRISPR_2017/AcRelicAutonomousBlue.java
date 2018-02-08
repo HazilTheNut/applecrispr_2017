@@ -43,7 +43,7 @@ public class AcRelicAutonomousBlue extends LinearOpMode {
         driveBR = (AtREVMotor)revModule.add(new AtREVMotor("drive-br"));
 
         jewelKnocker = (AtREVServo)revModule.add(new AtREVServo("jewelKnocker"));
-        jewelSensor = (AtJewelSensor)revModule.add(new AtJewelSensor("jewelSensor"));
+        jewelSensor = (AtJewelSensor)revModule.add(new AtJewelSensor("jewel_sensor"));
 
         telemetry.addData("Init successful: ", revModule.initialize(hardwareMap));
         telemetry.update();

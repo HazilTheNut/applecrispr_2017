@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class AtREVComponent {
 
-    protected String name;
+    public String name;
 
     public boolean init(HardwareMap hardwareMap){
         return false;
