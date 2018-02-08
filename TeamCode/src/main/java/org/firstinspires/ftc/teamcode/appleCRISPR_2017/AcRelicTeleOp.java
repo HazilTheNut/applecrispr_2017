@@ -78,6 +78,7 @@ shoulder theta =
     //Sensors
     private AtREVDistanceSensor distanceSensor;
     private AtREVColorSensor colorSensor;
+    private AtJewelSensor jewelSensor;
 
     //Suction
     private AtREVMotor suctionMotor;
@@ -141,6 +142,8 @@ shoulder theta =
 
         distanceSensor = (AtREVDistanceSensor)revModule.add(new AtREVDistanceSensor("glyph_finder"));
         colorSensor = (AtREVColorSensor)revModule.add(new AtREVColorSensor("color_sensor"));
+        jewelSensor = (AtJewelSensor)revModule.add(new AtJewelSensor("jewel_sensor"));
+
 
         telemetry.addData("Init successful: ", revModule.initialize(hardwareMap));
         telemetry.update();
@@ -415,11 +418,9 @@ shoulder theta =
             //armElbow.PIDpower((0.225 * scaleInput(gamepad2.right_stick_y)), (int)(elbowMathToActual(shoulderGoalAngle, elbowGoalAngle) * elbowEncTickToDeg));
         /**/
         } else if (gamepad2.right_stick_y > -0.5) {
-            // Calculate the desired encoder value
-            double shoulderSpeed = getArmMotorSpeed(getShoulderPos(),    shoulderGoalAngle,     1, 0 , 40);
-            double elbowSpeed =    getArmMotorSpeed(getElbowActualPos(), elbowGoalAngle,        1, 0 , 35);
-            regulatedMotorSpeed(armShoulder, shoulderPreviousPosition, shoulderSpeed);
-            regulatedMotorSpeed(armElbow,    elbowPreviousPosition,    elbowSpeed);
+        // Calculate the desired encoder value
+        armShoulder.setPower(getArmMotorSpeed(getShoulderPos(),       shoulderGoalAngle,                                       1, 10 , 0.20 + (0.1 * scaleInput(gamepad2.right_stick_y))));
+        armElbow.setPower(   getArmMotorSpeed(getElbowActualPos(),    elbowMathToActual(shoulderGoalAngle, elbowGoalAngle),    1, 10,  0.20 + (0.1 * scaleInput(gamepad2.right_stick_y))));
         }
         /*
         } else {
@@ -514,11 +515,11 @@ shoulder theta =
         int measuredCol = (int)((graphcols-1) * (armGoalX+totalarmlength) / (totalarmlength*2))+1;
         int measuredRow = graphrows - (int)((graphrows-1) * armGoalY/totalarmlength);
 
-        int fill = Math.round((16*suctionMotor.getPosition())/2200);
+        int fill = Math.round((16*suctionMotor.getPosition())/2200)<=16 ? Math.round((16*suctionMotor.getPosition())/2200) : 16;
         int fillBottom = fill<8 ? fill : 8;
         int fillTop = fill>8 ? fill-8 : 0;
 
-        String[] barArray = {"▒","▁","▂","▃","▄","▅","▆","▇","█"};
+        String[] barArray = {" ","▁","▂","▃","▄","▅","▆","▇","█"};
 
         // Build graph
         for (int r=1; r<=graphrows; r++) {
@@ -528,15 +529,15 @@ shoulder theta =
                 }
                 else if(c==34 && r==1)
                 {
-                    graph += "▄";
+                    graph += "▔";
                 }
                 else if(c==33 && (r==2 || r==3))
                 {
-                    graph += "▐";
+                    graph += "▏";
                 }
                 else if(c==35 && (r==2 || r==3))
                 {
-                    graph += "▌";
+                    graph += "▕";
                 }
                 else if(c==34 && r==2)
                 {
@@ -548,7 +549,7 @@ shoulder theta =
                 }
                 else if(c==34 && r==4)
                 {
-                    graph += "▀";
+                    graph += "▄";
                 }
                 else if (graphcols/2 < Math.sqrt(Math.pow(aspectratio*(graphrows-r),2) + Math.pow((graphcols/2-c),2) )){
                     graph += "█";
@@ -615,6 +616,9 @@ shoulder theta =
         telemetry.addData("> Elbow ticks / second", 1000 * (armElbow.getPosition() - elbowPreviousPosition) / timeElapsedSinceLastLoop);
         telemetry.addData("> Time of elbow power", elbowPowerEndTime - elbowPowerStartTime);
         telemetry.addData("","");
+
+        telemetry.addData("Blue side", jewelSensor.blueJewelLR()==AtJewelSensor.LEFT ? "left" : "right");
+        telemetry.addData("Red side", jewelSensor.redJewelLR()==AtJewelSensor.LEFT ? "left" : "right");
 
         logElbowEncPos();
 

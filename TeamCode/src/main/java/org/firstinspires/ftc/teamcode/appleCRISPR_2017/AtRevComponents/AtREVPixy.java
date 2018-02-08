@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDevice;
+import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchImpl;
 
 /**
@@ -28,8 +29,8 @@ import com.qualcomm.robotcore.hardware.I2cDeviceSynchImpl;
 public class AtREVPixy extends AtREVComponent {
 
     //I2C classes
-    private I2cDevice pixy;
-    private I2cDeviceSynchImpl dataQuerier;
+    private I2cDeviceSynch pixy;
+    //private I2cDeviceSynchImpl dataQuerier;
     private I2cAddr pixyAddress = I2cAddr.create8bit(0x54);
 
     //Constants
@@ -38,30 +39,31 @@ public class AtREVPixy extends AtREVComponent {
     public final int MAX_W = 255;
     public final int MAX_H = 200;
 
-    public AtREVPixy(String name)
+    public AtREVPixy(String i2cname)
     {
-        super.name = name;
+        name = i2cname;
     }
 
     @Override
     public boolean init(HardwareMap hardwareMap){
-        pixy = hardwareMap.i2cDevice.get("pixy");
-        dataQuerier = new I2cDeviceSynchImpl(pixy, pixyAddress, false);
-        dataQuerier.engage();
+        pixy = hardwareMap.i2cDeviceSynch.get(name);
+        //dataQuerier = new I2cDeviceSynchImpl(pixy, pixyAddress, false);
+        //dataQuerier.engage();
+        pixy.engage();
         return (pixy != null);
     }
 
     private byte[] getLargestDetectedObj(int signature)
     {
         //querying 0x51-57 returns data for largest object of signature as an array: [num of sig. detected,X,Y,Width,Height]
-        if(signature>0 && signature<6) { return dataQuerier.read(0x50+signature, 5); }
+        if(signature>0 && signature<6) { return pixy.read(0x50+signature, 5); }
         //Not a valid signature
         else { return null;}
     }
     //querying 0x50 returns data for largest object as an array: [signature,",X,Y,Width,Height]
     private byte[] getLargestDetectedObj()
     {
-        return dataQuerier.read(0x50, 6);
+        return pixy.read(0x50, 6);
     }
 
     public int getNumberDetectedObj(int signature)

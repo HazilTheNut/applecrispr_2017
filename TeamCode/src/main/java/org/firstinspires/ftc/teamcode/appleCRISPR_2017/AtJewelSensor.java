@@ -37,12 +37,12 @@ public class AtJewelSensor extends AtREVPixy {
     public int redJewelLR()
     {
         if(!checkJewelsSeen()) { return FAILURE; }
-        return (getLargestDetectedObjX(RED) < getLargestDetectedObjX(BLUE)) ? LEFT : RIGHT;
+        return (getLargestDetectedObjX(RED) > getLargestDetectedObjX(BLUE)) ? LEFT : RIGHT;
     }
     //Returns the side that Blue is on
     public int blueJewelLR()
     {
         if(!checkJewelsSeen()) { return FAILURE; }
-        return (getLargestDetectedObjX(BLUE) < getLargestDetectedObjX(RED)) ? LEFT : RIGHT;
+        return (getLargestDetectedObjX(BLUE) > getLargestDetectedObjX(RED)) ? LEFT : RIGHT;
     }
 }

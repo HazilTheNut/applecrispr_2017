@@ -4,7 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/FtcRobotController/FtcRobotController.iml" filepath="$PROJECT_DIR$/FtcRobotController/FtcRobotController.iml" />
       <module fileurl="file://$PROJECT_DIR$/TeamCode/TeamCode.iml" filepath="$PROJECT_DIR$/TeamCode/TeamCode.iml" />
-      <module fileurl="file://$PROJECT_DIR$/applecrispr_2017.iml" filepath="$PROJECT_DIR$/applecrispr_2017.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/applecrispr_2017.iml" filepath="$PROJECT_DIR$/.idea/applecrispr_2017.iml" />
+      <module fileurl="file://C:\Users\Zach\StudioProjects\applecrispr_2017\applecrispr_2017.iml" filepath="C:\Users\Zach\StudioProjects\applecrispr_2017\applecrispr_2017.iml" />
     </modules>
   </component>
 </project>
