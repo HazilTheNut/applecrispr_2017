@@ -12,7 +12,7 @@ import java.util.ArrayList;
  */
 
 
-@TeleOp(name = "Stromboli Drive", group = "TeleOp")
+//@TeleOp(name = "Stromboli Drive", group = "TeleOp")
 public class AcRelicTeleOp extends OpMode{
 
     /*

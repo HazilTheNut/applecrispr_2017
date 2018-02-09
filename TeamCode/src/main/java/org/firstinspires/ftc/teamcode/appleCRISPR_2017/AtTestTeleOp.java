@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVModule;
 import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVMotor;
+import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVServo;
 
 /**
  * TeleOp Mode
@@ -48,6 +49,8 @@ public class AtTestTeleOp extends OpMode {
 
     private AtREVMotor motor;
     private AtREVModule revModule;
+
+    private AtREVServo servo;
 
     private int goalPos = 0;
 
@@ -61,8 +64,8 @@ public class AtTestTeleOp extends OpMode {
 
 		revModule = new AtREVModule();
 
-        motor = (AtREVMotor)revModule.add(new AtREVMotor("test_motor"));
-
+        //motor = (AtREVMotor)revModule.add(new AtREVMotor("test_motor"));
+        servo = (AtREVServo)revModule.add(new AtREVServo("servo"));
         telemetry.addData("Motor int: ", revModule.initialize(hardwareMap));
         telemetry.update();
     }
@@ -75,17 +78,12 @@ public class AtTestTeleOp extends OpMode {
     @Override
     public void loop() {
 
-        if (gamepad1.x) {
-            goalPos = 180;
+        if (gamepad1.a) {
+            servo.setPosition(0);
         }
-        if (gamepad1.b) {
-            goalPos = 0;
+        if (gamepad1.y) {
+            servo.setPosition(1);
         }
-
-        motor.powerToPosition(0.2, goalPos, 8);
-
-        telemetry.addData("Motor Encoder Pos:", motor.getPosition());
-
     }
     /*
      * This method scales the joystick input so for low joystick values, the

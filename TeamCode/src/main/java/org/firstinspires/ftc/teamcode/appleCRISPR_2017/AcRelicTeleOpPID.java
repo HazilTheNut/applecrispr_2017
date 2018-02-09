@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Created by Zach on 2/8/2018.
  */
 
-@TeleOp(name = "Stromboli DrivePID", group = "TeleOp")
+@TeleOp(name = "Army Duck Drive", group = "TeleOp")
 public class AcRelicTeleOpPID extends OpMode {
         /*
         CONTROL SCHEME: (One Driver) Not in Use!
@@ -84,6 +84,9 @@ shoulder theta =
     private boolean isSlowDriving = false;
     private boolean slowButtonPressed = false; //Intentionally lags behind reality by one loop cycle
 
+    private boolean armPosMirrored = false;
+    private boolean mirrorButtonPressed = false;
+
     private double armGoalX = 4.5; //Default starting position
     private double armGoalY = 4.5;
     private final float armSegment1 = 14.5f; //In inches
@@ -94,7 +97,10 @@ shoulder theta =
     private double shoulderAngleOffset = 0;
     //private final double defaultElbowAngle = 0;
     private double elbowAngleOffset = 0;
+
     private double distanceSensorXPos = 7.5;
+    private double suctionCupRadius = 1.55;
+
     private double lastShoulderMotorSpeed = 0;
     private double lastElbowMotorSpeed = 0;
     private final int maxAccel = 0;
@@ -263,19 +269,31 @@ shoulder theta =
         if (gamepad2.x) {
             double shoulderPos = getShoulderPos();
             double elbowPos = getElbowActualPos();
-            wristGoalAngle = calculateWristPos(shoulderPos, elbowPos);
-
-            armWrist.setPosition((wristGoalAngle / 180) + 0.5);
+            moveWrist(shoulderPos, elbowPos);
         } else if (gamepad2.y) {
             armWrist.setPosition(0.5);
         }
 
     }
 
+    private void moveWrist(double shoulderPos, double elbowPos) {
+        wristGoalAngle = calculateWristPos(shoulderPos, elbowPos);
+        armWrist.setPosition((wristGoalAngle / 180) - 0.5);
+    }
+
     /**
      * Does a lot of math that is kind of the "secret recipe" of this software. I couldn't make comments that concisely explain what exactly is going on.
      */
     private void calculateArmAngles() {
+
+        if (gamepad2.y){
+            if (!mirrorButtonPressed){
+                armPosMirrored = !armPosMirrored;
+                mirrorButtonPressed = true;
+            }
+        } else if (mirrorButtonPressed)
+            mirrorButtonPressed = false;
+
         double r = Math.sqrt(Math.pow(armGoalX, 2) + Math.pow(armGoalY, 2));
         double baseAngle1 = Math.atan2(armGoalY, armGoalX);
         double elbowAngle = Math.PI - Math.acos((Math.pow(r, 2) - Math.pow(armSegment1, 2) - Math.pow(armSegment2, 2)) / (-2 * armSegment1 * armSegment2));
@@ -318,16 +336,14 @@ shoulder theta =
 
         double safetyMargin = 0.05; //We don't want to completely ruin the kinematics with one floating point rounding error
         double goalMovementScalar = -1f;
-        /*
+
         if (gamepad2.a){
-            double distance = distanceSensor.getLight(); //Get distance
-            if (distance != DistanceSensor.distanceOutOfRange){ //Checks if detection error
-                armGoalY = 6; //Sets y position (1 Glyph stack)
-                armGoalX = distance + distanceSensorXPos;
-                if (Math.sqrt(Math.pow(armGoalX,2) + Math.pow(armGoalY,2)) > armSegment1 + armSegment2 - safetyMargin){
-                    armGoalX = Math.sqrt(Math.pow(armSegment1 + armSegment2 - safetyMargin, 2) - Math.pow(armGoalY,2));
-                }
+            double distance = distanceSensor.reportDistance(); //Get distance
+            armGoalX = distance + distanceSensorXPos + suctionCupRadius + 0.5;
+            if (Math.sqrt(Math.pow(armGoalX,2) + Math.pow(armGoalY,2)) > armSegment1 + armSegment2 - safetyMargin) { //Restricts x position to within maximum radius
+                armGoalX = Math.sqrt(Math.pow(armSegment1 + armSegment2 - safetyMargin, 2) - Math.pow(armGoalY, 2));
             }
+            return;
         }
         /**/
 
@@ -344,23 +360,10 @@ shoulder theta =
         double maxLengthSqrd = Math.pow(armSegment1 + armSegment2, 2);
         double maxX = Math.sqrt(maxLengthSqrd - Math.pow(armGoalY, 2)) - safetyMargin;
 
-        if (goalXMovement > 0 && armGoalX > maxX)
+        if (armGoalX > maxX)
             armGoalY = Math.sqrt(maxLengthSqrd - Math.pow(armGoalX, 2)) - safetyMargin; //Moves y position down to allow more room to move x position
 
-        //U/D axis
-        double goalYMovement = 0;
-        /*/ Buttons to set height.  To be implemented later.
-        if (gamepad2.x){
-            armGoalY = 6 - baseHeightFromGround + suctionCupHeight;
-        }
-        else if (gamepad2.y){
-            armGoalY = 6*2 - baseHeightFromGround + suctionCupHeight;
-        }
-        else if (gamepad2.b){
-            armGoalY = 6*3 - baseHeightFromGround + suctionCupHeight;
-        } else {
-        */
-        goalYMovement = gamepad2.left_stick_y * goalMovementScalar;
+        double goalYMovement = gamepad2.left_stick_y * goalMovementScalar;
         if (Math.abs(goalYMovement) < 0.1) goalYMovement = 0;
         armGoalY += goalYMovement; //Receive input
         //}
@@ -370,9 +373,13 @@ shoulder theta =
             armGoalY = armSegment1 + armSegment2;
 
         double maxY = Math.sqrt(maxLengthSqrd - Math.pow(armGoalX, 2)) - safetyMargin;
-        if (goalYMovement > 0 && armGoalY > maxY)
+        if (armGoalY > maxY)
             armGoalX = Math.sqrt(maxLengthSqrd - Math.pow(armGoalY, 2)); //Moves x position back to allow more room to move y position
         /**/
+
+        if (goalXMovement != 0 || goalYMovement != 0){
+            moveWrist(shoulderGoalAngle, elbowGoalAngle);
+        }
 
     }
 
@@ -519,6 +526,7 @@ shoulder theta =
         telemetry.addData("> Slow Mode", isSlowDriving);
 
         telemetry.addData("ARM", "");
+        telemetry.addData("> Slow Mode", isSlowDriving);
         telemetry.addData("> Shoulder Offset", shoulderAngleOffset);
         telemetry.addData("> Shoulder Goal", shoulderGoalAngle);
         telemetry.addData("> Shoulder Combo", getShoulderPos());
