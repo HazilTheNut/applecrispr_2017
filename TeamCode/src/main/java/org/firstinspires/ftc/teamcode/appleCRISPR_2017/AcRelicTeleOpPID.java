@@ -315,6 +315,12 @@ shoulder theta =
         shoulderGoalAngle = baseTotalAngle * radToDeg; //Converted to degrees
         elbowGoalAngle = elbowAngle * radToDeg;
 
+        if(armPosMirrored)
+        {
+            shoulderGoalAngle *= -1;
+            elbowGoalAngle *= -1;
+        }
+
         wristGoalAngle = calculateWristPos(shoulderGoalAngle, elbowGoalAngle);
 
         /*
@@ -451,9 +457,9 @@ shoulder theta =
 
     private void doMiscActions() {
         //Suction
-        if ((gamepad1.left_bumper || gamepad1.dpad_down) && suctionMotor.getPosition() > 0) { //Always prioritize releasing the pressure
+        if ((gamepad1.left_bumper || gamepad1.dpad_down || gamepad2.left_bumper) && suctionMotor.getPosition() > 0) { //Always prioritize releasing the pressure
             suctionMotor.setPower(-0.6);
-        } else if ((gamepad1.right_bumper || gamepad1.dpad_up) && suctionMotor.getPosition() < 2200) {
+        } else if ((gamepad1.right_bumper || gamepad1.dpad_up || gamepad2.right_bumper) && suctionMotor.getPosition() < 2200) {
             suctionMotor.setPower(0.6);
         } else {
             suctionMotor.setPower(0);
