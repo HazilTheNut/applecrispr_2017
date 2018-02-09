@@ -88,8 +88,8 @@ shoulder theta =
     private double armGoalY = 4.5;
     private final float armSegment1 = 14.5f; //In inches
     private final float armSegment2 = 13.375f; //In inches
-    private double baseHeightFromGround = 2.4; // Measurement
-    private double suctionCupHeight = 3; // Measurement.  This is about the max; the min is around 2.75
+    private double baseHeightFromGround = 3.25; // Measurement
+    private double suctionCupHeight = 2.0; // Measurement.  This is about the max; the min is around 2.75
 
     private double shoulderAngleOffset = 0;
     //private final double defaultElbowAngle = 0;
@@ -298,6 +298,24 @@ shoulder theta =
     }
 
     private void goalPosMovement() {
+
+        if(gamepad2.dpad_down) {
+            armGoalY = (6 * 1) - baseHeightFromGround + suctionCupHeight;
+            return;
+        }
+        if(gamepad2.dpad_left) {
+            armGoalY = (6 * 2) - baseHeightFromGround + suctionCupHeight;
+            return;
+        }
+        if(gamepad2.dpad_up) {
+            armGoalY = (6 * 3) - baseHeightFromGround + suctionCupHeight;
+            return;
+        }
+        if(gamepad2.dpad_right) {
+            armGoalY = (6 * 4) - baseHeightFromGround + suctionCupHeight;
+            return;
+        }
+
         double safetyMargin = 0.05; //We don't want to completely ruin the kinematics with one floating point rounding error
         double goalMovementScalar = -1f;
         /*
@@ -325,6 +343,7 @@ shoulder theta =
 
         double maxLengthSqrd = Math.pow(armSegment1 + armSegment2, 2);
         double maxX = Math.sqrt(maxLengthSqrd - Math.pow(armGoalY, 2)) - safetyMargin;
+
         if (goalXMovement > 0 && armGoalX > maxX)
             armGoalY = Math.sqrt(maxLengthSqrd - Math.pow(armGoalX, 2)) - safetyMargin; //Moves y position down to allow more room to move x position
 
@@ -525,6 +544,8 @@ shoulder theta =
         telemetry.addData("> Color RED", colorSensor.getRed());
         telemetry.addData("> Color BLUE", colorSensor.getBlue());
         telemetry.addData("> Raw Voltage Distance: ", distanceSensor.reportRawVoltage());
+        telemetry.addData("> Raw Voltage Distance: ", distanceSensor.reportDistance());
+        telemetry.addData("> Raw Voltage Distance: ", distanceSensor.defaultVoltsPerInch*512);
 
         telemetry.addData("GRAPH", "");
         telemetry.addData("", "\n" + buildGraph());
