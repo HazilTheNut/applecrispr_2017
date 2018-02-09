@@ -296,7 +296,7 @@ shoulder theta =
      */
     private void calculateArmAngles() {
 
-        if (gamepad2.y){
+        if (gamepad2.back){
             if (!mirrorButtonPressed){
                 armPosMirrored = !armPosMirrored;
                 mirrorButtonPressed = true;
@@ -387,9 +387,9 @@ shoulder theta =
             armGoalX = Math.sqrt(maxLengthSqrd - Math.pow(armGoalY, 2)); //Moves x position back to allow more room to move y position
         /**/
 
-        if (goalXMovement != 0 || goalYMovement != 0){
+        /*if (goalXMovement != 0 || goalYMovement != 0){
             moveWrist(shoulderGoalAngle, elbowGoalAngle);
-        }
+        }*/
 
     }
 
