@@ -109,6 +109,9 @@ shoulder theta =
     private final double shoulderEncTickToDeg = 3 * 4.666666666; //Ratio is ticks / degrees. Multiplied due to gearing ratios
     private final double elbowEncTickToDeg = 2.5 * 3.111111111; //Ratio is ticks / degrees.
 
+    //1 points down, 0 points out, -1 is free control
+    private int pointWristDown = 1;
+
 
     //Telemetry
     private double movementDirection = 0; //In degrees
@@ -255,21 +258,26 @@ shoulder theta =
     }
 
     private void operateWrist() {
+        if(gamepad2.x) { pointWristDown = 1; }
+        if(gamepad2.y) { pointWristDown = 0; }
+
         if (gamepad2.left_trigger > 0.1) {
-            armWrist.incrementPosition(-0.025);
+            pointWristDown = -1;
+            armWrist.incrementPosition(-0.03);
         } else if (gamepad2.right_trigger > 0.1) {
-            armWrist.incrementPosition(0.025);
-        }
-        if (gamepad2.x) {
-            double shoulderPos = getShoulderPos();
-            double elbowPos = getElbowActualPos();
-            wristGoalAngle = calculateWristPos(shoulderPos, elbowPos);
-
-            armWrist.setPosition((wristGoalAngle / 180) + 0.5);
-        } else if (gamepad2.y) {
-            armWrist.setPosition(0.5);
+            pointWristDown = -1;
+            armWrist.incrementPosition(0.03);
         }
 
+        double shoulderPos = getShoulderPos();
+        double elbowPos = getElbowActualPos();
+        wristGoalAngle = calculateWristPos(shoulderPos, elbowPos);
+        if(pointWristDown == 1) {
+            armWrist.setPosition((wristGoalAngle / 170) + 0.5);
+        }
+        else {
+            armWrist.setPosition((wristGoalAngle / 170));
+        }
     }
 
     /**
