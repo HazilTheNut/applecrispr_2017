@@ -42,7 +42,7 @@ public class AcRelicAutonomousRed extends LinearOpMode {
         driveBL = (AtREVMotor)revModule.add(new AtREVMotor("drive-bl"));
         driveBR = (AtREVMotor)revModule.add(new AtREVMotor("drive-br"));
 
-        jewelKnocker = (AtREVServo)revModule.add(new AtREVServo("jewelKnocker"));
+        jewelKnocker = (AtREVServo)revModule.add(new AtREVServo("jewel_knocker"));
         jewelSensor = (AtJewelSensor)revModule.add(new AtJewelSensor("jewel_sensor"));
 
         telemetry.addData("Init successful: ", revModule.initialize(hardwareMap));
@@ -60,25 +60,26 @@ public class AcRelicAutonomousRed extends LinearOpMode {
         //Run
 
         //Jewel
+        double turnSpeed = 0.75;
         switch (jewelSensor.redJewelLR())
         {
             //Jewel not identified; skip jewel
             case AtJewelSensor.FAILURE: break;
             //Red jewel is on left; lower jewel knocker and turn left
-            case AtJewelSensor.LEFT:
-                jewelKnocker.setPosition(1);
-                driveFL.setPower(-1);
-                driveBL.setPower(-1);
-                driveBR.setPower(1);
-                driveFR.setPower(1);
-                sleep(turnTime);
-            //Red Jewel is on left; lower jewel knocker and turn left
             case AtJewelSensor.RIGHT:
                 jewelKnocker.setPosition(1);
-                driveFL.setPower(1);
-                driveBL.setPower(1);
-                driveBR.setPower(-1);
-                driveFR.setPower(-1);
+                driveFL.setPower(-1 * turnSpeed);
+                driveBL.setPower(-1 * turnSpeed);
+                driveBR.setPower(turnSpeed);
+                driveFR.setPower(turnSpeed);
+                sleep(turnTime);
+            //Red Jewel is on left; lower jewel knocker and turn left
+            case AtJewelSensor.LEFT:
+                jewelKnocker.setPosition(1);
+                driveFL.setPower(turnSpeed);
+                driveBL.setPower(turnSpeed);
+                driveBR.setPower(-1 * turnSpeed);
+                driveFR.setPower(-1 * turnSpeed);
                 sleep(turnTime);
             //Raise jewel knocker and reset position for parking step
             default:

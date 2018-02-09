@@ -87,8 +87,8 @@ shoulder theta =
     private boolean armPosMirrored = false;
     private boolean mirrorButtonPressed = false;
 
-    private double armGoalX = 4.5; //Default starting position
-    private double armGoalY = 4.5;
+    private double armGoalX = 5; //Default starting position
+    private double armGoalY = 5.875;
     private final float armSegment1 = 14.5f; //In inches
     private final float armSegment2 = 13.375f; //In inches
     private double baseHeightFromGround = 3.25; // Measurement
@@ -105,8 +105,8 @@ shoulder theta =
     private double lastElbowMotorSpeed = 0;
     private final int maxAccel = 0;
 
-    private final double defaultShoulderAngle = 111.68;
-    private final double defaultElbowAngle = 154.78;
+    private final double defaultShoulderAngle = 116.57;
+    private final double defaultElbowAngle = 148.27;
     private int defaultShoulderEncoder = 0;
     private int defaultElbowEncoder = 0;
 
@@ -275,9 +275,6 @@ shoulder theta =
             armWrist.incrementPosition(0.03);
         }
 
-        double shoulderPos = getShoulderPos();
-        double elbowPos = getElbowActualPos();
-        wristGoalAngle = calculateWristPos(shoulderPos, elbowPos);
         if(pointWristDown == 1) {
             armWrist.setPosition((wristGoalAngle / 170) + 0.5);
         }
@@ -296,7 +293,7 @@ shoulder theta =
      */
     private void calculateArmAngles() {
 
-        if (gamepad2.back){
+        if (gamepad2.back || gamepad2.right_stick_button){
             if (!mirrorButtonPressed){
                 armPosMirrored = !armPosMirrored;
                 mirrorButtonPressed = true;
@@ -315,13 +312,14 @@ shoulder theta =
         shoulderGoalAngle = baseTotalAngle * radToDeg; //Converted to degrees
         elbowGoalAngle = elbowAngle * radToDeg;
 
-        if(armPosMirrored)
-        {
-            shoulderGoalAngle *= -1;
-            elbowGoalAngle *= -1;
-        }
-
         wristGoalAngle = calculateWristPos(shoulderGoalAngle, elbowGoalAngle);
+
+        if (armPosMirrored)
+        {
+            shoulderGoalAngle = 180 - shoulderGoalAngle;
+            elbowGoalAngle *= -1;
+            wristGoalAngle *= -1;
+        }
 
         /*
         telemetry.addData("IK Math","");
@@ -351,7 +349,7 @@ shoulder theta =
         }
 
         double safetyMargin = 0.05; //We don't want to completely ruin the kinematics with one floating point rounding error
-        double goalMovementScalar = -1f;
+        double goalMovementScalar = -0.8f;
 
         if (gamepad2.a){
             double distance = distanceSensor.reportDistance(); //Get distance
@@ -362,6 +360,12 @@ shoulder theta =
             return;
         }
         /**/
+
+        if (gamepad2.left_stick_button){
+            armGoalY = 18;
+            armGoalX = 6;
+            return;
+        }
 
         //I/O axis
         double goalXMovement = gamepad2.left_stick_x * goalMovementScalar;
@@ -557,6 +561,7 @@ shoulder theta =
         telemetry.addData("> Goal Magnitude", Math.sqrt(Math.pow(armGoalX, 2) + Math.pow(armGoalY, 2)));
         telemetry.addData("> Wrist Pos", armWrist.getPosition());
         telemetry.addData("> Wrist Goal", (wristGoalAngle / 180) + 0.5);
+        telemetry.addData("> Wrist Orientation Mode", pointWristDown);
         telemetry.addData("> Elbow Power", armElbow.getPower());
         telemetry.addData("> Shoulder Power", armShoulder.getPower());
 
