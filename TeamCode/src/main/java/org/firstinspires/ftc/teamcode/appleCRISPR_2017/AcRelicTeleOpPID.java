@@ -92,7 +92,7 @@ shoulder theta =
     private final float armSegment1 = 14.5f; //In inches
     private final float armSegment2 = 13.375f; //In inches
     private double baseHeightFromGround = 3.25; // Measurement
-    private double suctionCupHeight = 2.0; // Measurement.  This is about the max; the min is around 2.75
+    private double suctionCupHeight = 3; // Measurement.  This is about the min; the max is around 3.25
 
     private double shoulderAngleOffset = 0;
     //private final double defaultElbowAngle = 0;
@@ -138,7 +138,9 @@ shoulder theta =
 
         armShoulder = (AtREVMotor) revModule.add(new AtREVMotor("shoulder"));
         armElbow = (AtREVMotor) revModule.add(new AtREVMotor("elbow"));
-        armWrist = (AtREVServo) revModule.add(new AtREVServo("wrist", calculateWristPos(defaultShoulderAngle, defaultElbowAngle), false));
+        armWrist = (AtREVServo) revModule.add(new AtREVServo("wrist", calculateWristPos(defaultShoulderAngle, elbowMathToActual(defaultShoulderAngle, defaultElbowAngle)), false));
+
+        revModule.add(new AtREVServo("jewel_knocker", .9, false)); //This is just to move the jewel knocker to upward position, and so we don't need to save it for later
 
         suctionMotor = (AtREVMotor) revModule.add(new AtREVMotor("suction"));
 
@@ -218,15 +220,15 @@ shoulder theta =
 
         //Finally, moving!
         if (gamepad1.right_trigger > 0.1) { //Clockwise turn
-            driveFL.setPower(-1 * gamepad1.right_trigger * powerScalar);
-            driveBL.setPower(-1 * gamepad1.right_trigger * powerScalar);
-            driveFR.setPower(gamepad1.right_trigger * powerScalar);
-            driveBR.setPower(gamepad1.right_trigger * powerScalar);
+            driveFL.setPower(-1 * gamepad1.right_trigger * powerScalar * gamepad1.right_trigger);
+            driveBL.setPower(-1 * gamepad1.right_trigger * powerScalar * gamepad1.right_trigger);
+            driveFR.setPower(gamepad1.right_trigger * powerScalar * gamepad1.right_trigger);
+            driveBR.setPower(gamepad1.right_trigger * powerScalar * gamepad1.right_trigger);
         } else if (gamepad1.left_trigger > 0.1) { //Counter-clockwise turn
-            driveFL.setPower(gamepad1.left_trigger * powerScalar);
-            driveBL.setPower(gamepad1.left_trigger * powerScalar);
-            driveFR.setPower(-1 * gamepad1.left_trigger * powerScalar);
-            driveBR.setPower(-1 * gamepad1.left_trigger * powerScalar);
+            driveFL.setPower(gamepad1.left_trigger * powerScalar * gamepad1.left_trigger);
+            driveBL.setPower(gamepad1.left_trigger * powerScalar * gamepad1.left_trigger);
+            driveFR.setPower(-1 * gamepad1.left_trigger * powerScalar * gamepad1.left_trigger);
+            driveBR.setPower(-1 * gamepad1.left_trigger * powerScalar * gamepad1.left_trigger);
         } else { //Drives normally if not turning
             driveFL.setPower(flPower * powerScalar);
             driveBR.setPower(flPower * powerScalar);
@@ -275,17 +277,12 @@ shoulder theta =
             armWrist.incrementPosition(0.03);
         }
 
-        if(pointWristDown == 1) {
-            armWrist.setPosition((wristGoalAngle / 170) + 0.5);
+        if(pointWristDown == 1 && !(new Float((-wristGoalAngle / 180) + 0.5)).isNaN()) { //Pointed down
+            armWrist.setPosition((-wristGoalAngle / 180) + 0.5);
         }
-        else {
-            armWrist.setPosition((wristGoalAngle / 170));
+        else if (pointWristDown == 0 && !(new Float((-wristGoalAngle / 180) + 1)).isNaN()){ //Pointed Sideways
+            armWrist.setPosition((-wristGoalAngle / 180) + 1);
         }
-    }
-
-    private void moveWrist(double shoulderPos, double elbowPos) {
-        wristGoalAngle = calculateWristPos(shoulderPos, elbowPos);
-        armWrist.setPosition((wristGoalAngle / 180) - 0.5);
     }
 
     /**
@@ -318,7 +315,7 @@ shoulder theta =
         {
             shoulderGoalAngle = 180 - shoulderGoalAngle;
             elbowGoalAngle *= -1;
-            wristGoalAngle *= -1;
+            wristGoalAngle = -wristGoalAngle;
         }
 
         /*
@@ -353,7 +350,7 @@ shoulder theta =
 
         if (gamepad2.a){
             double distance = distanceSensor.reportDistance(); //Get distance
-            armGoalX = distance + distanceSensorXPos + suctionCupRadius + 0.5;
+            armGoalX = distance + distanceSensorXPos + suctionCupRadius;
             if (Math.sqrt(Math.pow(armGoalX,2) + Math.pow(armGoalY,2)) > armSegment1 + armSegment2 - safetyMargin) { //Restricts x position to within maximum radius
                 armGoalX = Math.sqrt(Math.pow(armSegment1 + armSegment2 - safetyMargin, 2) - Math.pow(armGoalY, 2));
             }
@@ -421,7 +418,7 @@ shoulder theta =
         int encoder = 0;
         if(motor.equals(armElbow.name))
         {
-            encoder = (int) (-defaultElbowEncoder+(angle-elbowMathToActual(defaultShoulderAngle, defaultElbowAngle))*elbowEncTickToDeg);
+            encoder = (int) (defaultElbowEncoder+(angle-elbowMathToActual(defaultShoulderAngle, defaultElbowAngle))*elbowEncTickToDeg);
         }
         else if(motor.equals(armShoulder.name))
         {
@@ -438,8 +435,14 @@ shoulder theta =
         armElbow.setPower(scaleInput(gamepad2.right_stick_y) * 0.25);
     }
 
+    /**
+     * Conversion function
+     * @param shoulderAngle
+     * @param elbowAngle in Math Elbow Angle
+     * @return
+     */
     private double calculateWristPos(double shoulderAngle, double elbowAngle) {
-        return 90 + shoulderAngle - elbowActualToMath(shoulderAngle, elbowAngle);
+        return 90 + shoulderAngle - elbowAngle;
     }
 
     /**
@@ -560,7 +563,7 @@ shoulder theta =
         telemetry.addData("> Goal Pos Y", armGoalY);
         telemetry.addData("> Goal Magnitude", Math.sqrt(Math.pow(armGoalX, 2) + Math.pow(armGoalY, 2)));
         telemetry.addData("> Wrist Pos", armWrist.getPosition());
-        telemetry.addData("> Wrist Goal", (wristGoalAngle / 180) + 0.5);
+        telemetry.addData("> Wrist Goal", wristGoalAngle);
         telemetry.addData("> Wrist Orientation Mode", pointWristDown);
         telemetry.addData("> Elbow Power", armElbow.getPower());
         telemetry.addData("> Shoulder Power", armShoulder.getPower());
@@ -611,3 +614,20 @@ shoulder theta =
         return dScale;
     }
 }
+
+/**
+.....................
+.    BODY ARMOUR    .
+.                   .
+.                   .
+.    __________     .
+.   ( *% & @  $)    .
+.    ‾‾‾‾‾‾‾‾‾‾‾‾‾      .
+.                   .
+.                   .
+.                   .
+.                   .
+.....................
+*/
+
+
