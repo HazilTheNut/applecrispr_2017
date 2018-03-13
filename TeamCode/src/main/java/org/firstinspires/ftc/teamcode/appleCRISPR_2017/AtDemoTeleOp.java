@@ -3,8 +3,9 @@ package org.firstinspires.ftc.teamcode.appleCRISPR_2017;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots.AtDemoFourMotor;
 import org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots.AtDemoTwoMotor;
 
 /**
@@ -14,8 +15,8 @@ import org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots.AtDemoTwoMotor;
  * Good luck!
  */
 
-@Autonomous(name = "Run Demo", group = "Autonomous")
-public class AtDemoRun extends LinearOpMode {
+@TeleOp(name = "Run Demo TeleOp", group = "TeleOp")
+public class AtDemoTeleOp extends OpMode {
 
     /**
      * This bit of code executes when you click the "init" button on the phone to run things!
@@ -23,37 +24,29 @@ public class AtDemoRun extends LinearOpMode {
      *
      * @throws InterruptedException when the process is interrupted.  Did you expect otherwise?
      */
+
+    AtDemoTwoMotor robot;
+
     @Override
-    public void runOpMode() throws InterruptedException {
+    public void init() {
+        robot = new AtDemoTwoMotor(hardwareMap);
+    }
 
-        AtDemoTwoMotor robot = new AtDemoTwoMotor(hardwareMap);
-        //AtDemoFourMotor robot = new AtDemoFourMotor(hardwareMap);
-        waitForStart();
-
-        robot.driveForward(75, 3);
-        telemetry.addData("FORWARD","");
+    @Override
+    public void loop() {
+        if (gamepad1.b){
+            robot.stop();
+        } else if (gamepad1.right_trigger > 0.1){
+            robot.turnLeft((int)(gamepad1.right_trigger * 100), 0.05f);
+        } else if (gamepad1.left_trigger > 0.1){
+            robot.turnRight((int)(gamepad1.left_trigger * 100), 0.05f);
+        } else if (gamepad1.right_stick_y > 0.1){
+            robot.driveBackward((int)(gamepad1.right_stick_y * 100), 0.05f);
+        } else if (gamepad1.right_stick_y < 0.1){
+            robot.driveForward((int)(gamepad1.right_stick_y * -100), 0.05f);
+        }
+        telemetry.addData("gamepad1.right_stick_y",gamepad1.right_stick_y);
         telemetry.update();
-
-        robot.stop();
-
-        robot.turnLeft(75, 3);
-        telemetry.addData("CCWISE","");
-        telemetry.update();
-
-        robot.stop();
-        robot.sleep(2);
-
-        robot.turnRight(75, 3);
-        telemetry.addData("C-WISE","");
-        telemetry.update();
-
-        robot.stop();
-
-        robot.driveBackward(75, 3);
-        telemetry.addData("BACKWARD","");
-        telemetry.update();
-
-        robot.stop();
     }
 }
 
