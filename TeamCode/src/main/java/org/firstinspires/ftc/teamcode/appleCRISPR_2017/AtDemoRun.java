@@ -4,9 +4,7 @@ package org.firstinspires.ftc.teamcode.appleCRISPR_2017;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVModule;
-import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVServo;
-import org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots.AtDemoBunnySlope;
+import org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots.AtDemoTwoMotor;
 
 /**
  * Created by Riley on 13-Apr-17.
@@ -27,9 +25,31 @@ public class AtDemoRun extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-        AtDemoBunnySlope robot = new AtDemoBunnySlope(hardwareMap);
+        AtDemoTwoMotor robot = new AtDemoTwoMotor(hardwareMap);
+        waitForStart();
 
         robot.driveForward(75, 3);
+        telemetry.addData("FORWARD","");
+        telemetry.update();
+
+        robot.stop();
+
+        robot.turnLeft(75, 3);
+        telemetry.addData("CCWISE","");
+        telemetry.update();
+
+        robot.stop();
+        robot.sleep(2);
+
+        robot.turnRight(75, 3);
+        telemetry.addData("C-WISE","");
+        telemetry.update();
+
+        robot.stop();
+
+        robot.driveBackward(75, 3);
+        telemetry.addData("BACKWARD","");
+        telemetry.update();
 
         robot.stop();
     }

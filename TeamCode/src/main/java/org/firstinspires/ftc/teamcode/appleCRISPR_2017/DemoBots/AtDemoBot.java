@@ -22,12 +22,7 @@ public class AtDemoBot {
     public void driveForward(int power, float time){
         float motorPower = Math.max(0, Math.min(power, 100));
         linearDrive(motorPower / 100);
-        try {
-            Thread.sleep((long)(time / 1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Thread.currentThread().interrupt();
-        }
+        sleep(time);
     }
 
     /**
@@ -38,12 +33,7 @@ public class AtDemoBot {
     public void driveBackward(int power, float time){
         float motorPower = Math.max(0, Math.min(power, 100));
         linearDrive(motorPower / -100);
-        try {
-            Thread.sleep((long)(time / 1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Thread.currentThread().interrupt();
-        }
+        sleep(time);
     }
 
     /**
@@ -54,12 +44,7 @@ public class AtDemoBot {
     public void turnLeft(int power, float time){
         float motorPower = Math.max(0, Math.min(power, 100));
         pinwheelRotation(motorPower / -100);
-        try {
-            Thread.sleep((long)(time / 1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Thread.currentThread().interrupt();
-        }
+        sleep(time);
     }
 
     /**
@@ -69,9 +54,14 @@ public class AtDemoBot {
      */
     public void turnRight(int power, float time){
         float motorPower = Math.max(0, Math.min(power, 100));
-        pinwheelRotation(motorPower / -100);
+        pinwheelRotation(motorPower / 100);
+        sleep(time);
+    }
+
+    //Convenience function for waiting time
+    public void sleep(float time){
         try {
-            Thread.sleep((long)(time / 1000));
+            Thread.sleep((long)(time * 1000));
         } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();
