@@ -21,7 +21,7 @@ public class AtDemoFourMotor extends AtDemoBot {
 
         leftWheel.init(hardwareMap);
         rightWheel.init(hardwareMap);
-        rightWheel.setOneDirection(false);
+        leftWheel.setOneDirection(false);
         rightWheel.setOneDirection(false);
     }
 
