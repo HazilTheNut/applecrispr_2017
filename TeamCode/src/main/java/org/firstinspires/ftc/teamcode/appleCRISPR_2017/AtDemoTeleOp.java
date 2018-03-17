@@ -6,6 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots.AtDemoBot;
+import org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots.AtDemoFourMotor;
+import org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots.AtDemoTricycle;
 import org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots.AtDemoTwoMotor;
 
 /**
@@ -22,18 +25,31 @@ public class AtDemoTeleOp extends OpMode {
      * This bit of code executes when you click the "init" button on the phone to run things!
      * Thus, if you want something to happen, put it in between the curly brackets.
      *
-     * @throws InterruptedException when the process is interrupted.  Did you expect otherwise?
      */
 
-    AtDemoTwoMotor robot;
+    AtDemoBot robot;
 
     @Override
     public void init() {
-        robot = new AtDemoTwoMotor(hardwareMap);
+        try {
+            robot = new AtDemoTwoMotor(hardwareMap);
+        }
+        catch (IllegalArgumentException ignored){}
+        try {
+            robot = new AtDemoFourMotor(hardwareMap);
+        }
+        catch (IllegalArgumentException ignored){}
+        try {
+            robot = new AtDemoTricycle(hardwareMap);
+        }
+        catch (IllegalArgumentException ignored){}
     }
+
+    private String robotType = "UNASSIGNED";
 
     @Override
     public void loop() {
+        //Driving
         if (gamepad1.b){
             robot.stop();
         } else if (gamepad1.right_trigger > 0.1){

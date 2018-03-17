@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.appleCRISPR_2017.AtRevComponents.AtREVServo;
@@ -26,14 +27,14 @@ public class AtDemoTricycle extends AtDemoBot {
     void linearDrive(float power) {
         power = (float) (.5 + power/2);
         leftWheel.setPosition(power);
-        rightWheel.setPosition(power);
+        rightWheel.setPosition(-power+1);
     }
 
     @Override
     void pinwheelRotation(float power) {
         power = (float) (.5 + power/2);
         leftWheel.setPosition(power);
-        rightWheel.setPosition(-power);
+        rightWheel.setPosition(power);
     }
 
     @Override
