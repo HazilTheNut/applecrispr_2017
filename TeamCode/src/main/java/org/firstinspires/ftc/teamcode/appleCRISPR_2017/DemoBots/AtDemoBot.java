@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.appleCRISPR_2017.DemoBots;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 /**
  * Created by Jared on 10-Mar-18.
  */
@@ -80,6 +82,11 @@ public class AtDemoBot {
      * DemoBots should override this function
      */
     void pinwheelRotation(float power){}
+
+
+    public void testLeft(){}
+    public void testRight(){}
+
 
     /**
      * Stops robot
