@@ -14,11 +14,21 @@ import java.util.Map;
  */
 
 public class AtREVServoConstants {
-    //public static final Map<String, Float> servoZeros;
 
-    public AtREVServoConstants() {
-        Map<String, Float> map = new HashMap<>();
-        map.put("right",.45f);
-        //servoZeros = Collections.unmodifiableMap(map);
+    private static final Object[][] servoZeros =
+    {
+            {"Servo1",0.45f}
+    };
+
+    public static float getServoZero(String name)
+    {
+        for(int i=0; i<servoZeros.length ;i++)
+        {
+            if(((String)servoZeros[i][0]).equals(name))
+            {
+                return (float)servoZeros[i][1];
+            }
+        }
+        return 0.5f;
     }
 }

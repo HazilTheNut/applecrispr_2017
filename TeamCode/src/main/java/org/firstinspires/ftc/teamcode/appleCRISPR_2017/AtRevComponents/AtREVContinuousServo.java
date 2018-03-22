@@ -15,17 +15,25 @@ public class AtREVContinuousServo extends AtREVComponent {
     // Note that for some people, power inputs from -.76 to .76 work better
 
     private CRServo servo;
+    private float servoZero = Float.MAX_VALUE;
+
+    public AtREVContinuousServo(String servoName, String servoLabel) {
+        name = servoName;
+        servoZero = AtREVServoConstants.getServoZero(servoLabel);
+    }
 
     public AtREVContinuousServo(String servoName) {
         name = servoName;
-        // TODO: Interface with AtREVServoConstants here
     }
-
 
     @Override
     public boolean init(HardwareMap hardwareMap) {
         servo = hardwareMap.get(CRServo.class, name);
         setReversed(false);
+        if(servoZero == Float.MAX_VALUE)
+        {
+            servoZero = AtREVServoConstants.getServoZero(servo.getDeviceName()+servo.getVersion());
+        }
         return (servo != null);
     }
 
