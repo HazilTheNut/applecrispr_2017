@@ -45,30 +45,53 @@ public class AtDemoRun extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         initialize();
+        robot.stop();
         waitForStart();
 
-        robot.driveForward(75, 3);
         telemetry.addData("FORWARD","");
         telemetry.update();
+        robot.driveForward(75, 3);
 
         robot.stop();
+        robot.sleep(1);
 
-        robot.turnLeft(75, 3);
+
+        telemetry.addData("RIGHT +","");
+        telemetry.update();
+        robot.stop();
+        robot.testRight();
+        robot.sleep(4);
+
+        robot.stop();
+        robot.sleep(1);
+
+
+
+        telemetry.addData("LEFT +","");
+        telemetry.update();
+        robot.testLeft();
+        robot.sleep(4);
+
+        robot.stop();
+        robot.sleep(1);
+
+
         telemetry.addData("CCWISE","");
         telemetry.update();
+        robot.turnLeft(75, 3);
 
         robot.stop();
         robot.sleep(2);
 
-        robot.turnRight(75, 3);
         telemetry.addData("C-WISE","");
         telemetry.update();
+        robot.turnRight(75, 3);
 
         robot.stop();
 
-        robot.driveBackward(75, 3);
         telemetry.addData("BACKWARD","");
         telemetry.update();
+        robot.driveBackward(75, 3);
 
         robot.stop();
     }

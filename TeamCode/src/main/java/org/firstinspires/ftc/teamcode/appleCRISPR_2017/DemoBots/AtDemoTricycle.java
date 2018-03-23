@@ -19,7 +19,7 @@ public class AtDemoTricycle extends AtDemoBot {
     public AtDemoTricycle(HardwareMap map) {
         super(map);
         leftWheel = new AtREVContinuousServo("left");
-        rightWheel = new AtREVContinuousServo("right");
+        rightWheel = new AtREVContinuousServo("right", "tricycleRight");
 
         leftWheel.init(hardwareMap);
         rightWheel.init(hardwareMap);
