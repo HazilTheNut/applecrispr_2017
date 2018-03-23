@@ -51,6 +51,7 @@ public class AtREVContinuousServo extends AtREVComponent {
      * @see #getPower()
      */
     public void setPower(double power){
+        setReversed(power<0);
         servo.setPower(power+servoZero-.5);
     }
 

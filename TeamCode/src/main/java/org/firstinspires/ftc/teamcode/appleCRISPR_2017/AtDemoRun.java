@@ -44,37 +44,29 @@ public class AtDemoRun extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
+
         initialize();
         robot.stop();
         waitForStart();
 
+
+        for (float i=-1; i<1; i+=.1){
+            robot.driveForward((int) (i*100),0);
+            telemetry.addData("Power",i);
+            telemetry.update();
+            sleep(1000);
+        }
+
+
         telemetry.addData("FORWARD","");
         telemetry.update();
         robot.driveForward(75, 3);
-
-        robot.stop();
-        robot.sleep(1);
-
-
-        telemetry.addData("RIGHT +","");
-        telemetry.update();
-        robot.stop();
-        robot.testRight();
         robot.sleep(4);
 
-        robot.stop();
-        robot.sleep(1);
-
-
-
-        telemetry.addData("LEFT +","");
+        telemetry.addData("STOP","");
         telemetry.update();
-        robot.testLeft();
-        robot.sleep(4);
-
         robot.stop();
         robot.sleep(1);
-
 
         telemetry.addData("CCWISE","");
         telemetry.update();
@@ -94,6 +86,9 @@ public class AtDemoRun extends LinearOpMode {
         robot.driveBackward(75, 3);
 
         robot.stop();
+
+
+
     }
 }
 

@@ -40,16 +40,6 @@ public class AtDemoTricycle extends AtDemoBot {
         leftWheel.setPower(power);
         rightWheel.setPower(-1 * power);
     }
-
-    @Override
-    public void testLeft(){
-        leftWheel.setPower(1);
-    }
-    @Override
-    public void testRight(){
-        rightWheel.setPower(1);
-    }
-
     @Override
     public void stop() {
         leftWheel.stop();
