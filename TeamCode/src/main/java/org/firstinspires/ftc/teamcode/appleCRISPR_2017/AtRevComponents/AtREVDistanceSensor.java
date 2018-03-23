@@ -19,7 +19,7 @@ public class AtREVDistanceSensor extends AtREVComponent {
 
     private AnalogInput analogSensor;
 
-    private double defaultVoltsPerInch = 3.3/512;
+    public double defaultVoltsPerInch = 3.3/512.0;
 
     public AtREVDistanceSensor(String componentName) {
         name = componentName;
@@ -28,12 +28,13 @@ public class AtREVDistanceSensor extends AtREVComponent {
     @Override
     public boolean init(HardwareMap hardwareMap) {
         analogSensor = hardwareMap.get(AnalogInput.class, name);
+        defaultVoltsPerInch = analogSensor.getMaxVoltage()/512.0;
         return (analogSensor != null);
     }
 
-    public double reportRawVoltage() { return analogSensor.getVoltage(); }
+    public double reportRawVoltage() { return analogSensor.getVoltage();}
 
-    public double reportDistance(double voltage, double voltsPerInch) { return voltage/voltsPerInch; }
+    public double reportDistance(double voltage, double voltsPerInch) { return 2*voltage/voltsPerInch; }
 
     public double reportDistance() { return reportDistance(reportRawVoltage(), defaultVoltsPerInch); }
 }

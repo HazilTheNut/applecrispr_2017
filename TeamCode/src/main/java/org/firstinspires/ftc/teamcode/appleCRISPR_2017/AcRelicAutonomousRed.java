@@ -42,14 +42,16 @@ public class AcRelicAutonomousRed extends LinearOpMode {
         driveBL = (AtREVMotor)revModule.add(new AtREVMotor("drive-bl"));
         driveBR = (AtREVMotor)revModule.add(new AtREVMotor("drive-br"));
 
-        jewelKnocker = (AtREVServo)revModule.add(new AtREVServo("jewelKnocker"));
-        jewelSensor = (AtJewelSensor)revModule.add(new AtJewelSensor("jewelSensor"));
+        jewelKnocker = (AtREVServo)revModule.add(new AtREVServo("jewel_knocker"));
+        jewelSensor = (AtJewelSensor)revModule.add(new AtJewelSensor("jewel_sensor"));
 
         telemetry.addData("Init successful: ", revModule.initialize(hardwareMap));
         telemetry.update();
 
         driveBL.setDirection(false);
     }
+
+    private int unturnValue = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -60,50 +62,65 @@ public class AcRelicAutonomousRed extends LinearOpMode {
         //Run
 
         //Jewel
+        double turnSpeed = 0.75;
         switch (jewelSensor.redJewelLR())
         {
             //Jewel not identified; skip jewel
             case AtJewelSensor.FAILURE: break;
-            //Red jewel is on left; lower jewel knocker and turn left
-            case AtJewelSensor.LEFT:
-                jewelKnocker.setPosition(1);
-                driveFL.setPower(-1);
-                driveBL.setPower(-1);
-                driveBR.setPower(1);
-                driveFR.setPower(1);
-                sleep(turnTime);
-            //Red Jewel is on left; lower jewel knocker and turn left
+            //Blue jewel is on left; lower jewel knocker and turn left (Pixy is up-side down)
             case AtJewelSensor.RIGHT:
-                jewelKnocker.setPosition(1);
-                driveFL.setPower(1);
-                driveBL.setPower(1);
-                driveBR.setPower(-1);
-                driveFR.setPower(-1);
+                jewelKnocker.setPosition(0.425);
+                sleep(1000);
+                driveFL.setPower(-1 * turnSpeed);
+                driveBL.setPower(-1 * turnSpeed);
+                driveBR.setPower(turnSpeed);
+                driveFR.setPower(turnSpeed);
+                unturnValue = 1;
                 sleep(turnTime);
-            //Raise jewel knocker and reset position for parking step
-            default:
-                jewelKnocker.setPosition(0);
-                driveFL.setPower(-1*driveFL.getPower());
-                driveBL.setPower(-1*driveBL.getPower());
-                driveBR.setPower(-1*driveBR.getPower());
-                driveFR.setPower(-1*driveFR.getPower());
+                break;
+            //Blue Jewel is on right; lower jewel knocker and turn right (Pixy is up-side down)
+            case AtJewelSensor.LEFT:
+                jewelKnocker.setPosition(0.425);
+                sleep(1000);
+                driveFL.setPower(turnSpeed);
+                driveBL.setPower(turnSpeed);
+                driveBR.setPower(-1 * turnSpeed);
+                driveFR.setPower(-1 * turnSpeed);
+                unturnValue = -1;
                 sleep(turnTime);
-                driveFL.setPower(0);
-                driveBL.setPower(0);
-                driveBR.setPower(0);
-                driveFR.setPower(0);
-                sleep(100);
+                break;
         }
 
-        //Parking (driving forward because we are on red side) GUESS
-        driveFL.setPower(1);
-        driveBL.setPower(1);
-        driveBR.setPower(1);
-        driveFR.setPower(1);
+        jewelKnocker.setPosition(0.9);
+        stopMoving();
+        sleep(1000);
+
+        driveFL.setPower(turnSpeed * unturnValue);
+        driveBL.setPower(turnSpeed * unturnValue);
+        driveBR.setPower(-1 * turnSpeed * unturnValue);
+        driveFR.setPower(-1 * turnSpeed * unturnValue);
+
+        sleep(turnTime);
+        stopMoving();
+        sleep(100);
+
+        //Parking (driving backward because we are on blue side) GUESS
+        driveFL.setPower(-1);
+        driveBL.setPower(-1);
+        driveBR.setPower(-1);
+        driveFR.setPower(-1);
 
         sleep(1500);
 
         revModule.allStop();
         stop();
+    }
+
+    private void stopMoving() {
+        driveFL.setPower(0);
+        driveBL.setPower(0);
+        driveBR.setPower(0);
+        driveFR.setPower(0);
+
     }
 }
