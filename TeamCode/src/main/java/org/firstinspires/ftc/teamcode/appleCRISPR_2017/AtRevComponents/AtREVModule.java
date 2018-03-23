@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 
 /**
- * Manages the robot components. 'At' stands for Apple Tau.
+ * Manages the robot components. 'At' stands for Apple Tau!
  *
  * Although the name refers to a singular REV expansion hub, this object can (and should) contain all components anyways.
  * The name "AtRevController" is a better one, but I haven't bothered to refactor the name.
